@@ -10,6 +10,7 @@ public:
     ChessBoard();
 
     virtual void print(std::ostream& os) =0;
+    virtual void reset() =0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

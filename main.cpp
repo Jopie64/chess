@@ -39,6 +39,11 @@ int main(int argc, char *argv[])
             [&]{ board->print(cout); }
         },
         {
+            "reset", "r",
+            "Reset the board to its initial status",
+            [&]{ board->reset(); }
+        },
+        {
             "help", "h",
             "Print this help.",
             [&]{ printHelp(); }

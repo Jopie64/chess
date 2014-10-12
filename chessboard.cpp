@@ -96,6 +96,7 @@ struct Field
     static inline Pos toPos(int ix) { return Pos(ix%WIDTH, ix/WIDTH); }
     Piece get(int i) const { return pieces[i]; }
     Piece get(Pos pos) const { return pieces[toIx(pos)]; }
+    void  set(Pos pos, Piece p) { pieces[toIx(pos)] = p; }
 
     bool isInside(Pos pos) const { return pos.x >= 0 && pos.x < WIDTH && pos.y >= 0 && pos.y < HEIGHT; }
 
@@ -156,6 +157,13 @@ struct Field
         case Piece::queen:
         case Piece::king:;
         }
+    }
+
+    void move(const Move& move)
+    {
+        set(move.to, get(move.from));
+        set(move.from, Piece());
+        turn = !turn;
     }
 
     Piece pieces[POSITIONS];
@@ -231,6 +239,21 @@ public:
         field.getMoves(moves);
         return moves;
     }
+
+    virtual void move(const Move& move) override
+    {
+        bool valid = false;
+        for(auto &i:getMoves(move.from))
+            if(i.to == move.to)
+            {
+                valid = true;
+                break;
+            }
+        if(!valid)
+            throw runtime_error("Not a valid move");
+        field.move(move);
+    }
+
 
     Field field;
 };

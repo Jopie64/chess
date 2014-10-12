@@ -38,6 +38,11 @@ struct Pos
         newPos += that;
         return newPos;
     }
+    bool operator==(const Pos& that) const
+    {
+        return x == that.x && y == that.y;
+    }
+
     bool isValid() const { return x >= 0; }
     void invalidate() { x = -1; }
 
@@ -57,7 +62,7 @@ struct Move
 };
 
 std::ostream& operator <<(std::ostream& os, const Move& m);
-std::istream& operator >>(std::ostream& is, Move& m);
+std::istream& operator >>(std::istream& is, Move& m);
 
 typedef std::vector<Move> T_moves;
 
@@ -71,6 +76,7 @@ public:
 
     virtual T_moves getMoves(Pos p) =0;
     virtual T_moves getMoves() =0;
+    virtual void    move(const Move& move) =0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

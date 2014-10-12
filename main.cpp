@@ -14,6 +14,15 @@ struct Command
     function<void(istream& params)> exec;
 };
 
+void skipWsNow(istream& str)
+{
+    char c;
+    str >> noskipws;
+    while(isspace(str.peek()))
+        str >> c;
+    str >> skipws;
+}
+
 int main(int argc, char *argv[])
 {
     using namespace Chess;
@@ -67,6 +76,29 @@ int main(int argc, char *argv[])
                 if(count == 0)
                     cout << "No possible moves for piece on this position.";
                 cout << endl;
+            }
+        },
+        {
+            "move", "m",
+            "Move a piece. Use move number or write like e.g. D2-D4",
+            [&](istream& params)
+            {
+                if(params.peek() == char_traits<char>::eof())
+                    throw runtime_error("Expected move. Use move number or write like e.g. D2-D4");
+                skipWsNow(params);
+                Move move;
+                if(isdigit(params.peek()))
+                {
+                    string moveNrStr;
+                    params >> moveNrStr;
+                    int moveNr = atoi(moveNrStr.c_str()) - 1;
+                    if(moveNr < 0 || moveNr >= (int)moves.size())
+                        throw runtime_error("Not a valid move number");
+                    move = moves[moveNr];
+                }
+                else
+                    params >> move;
+                board->move(move);
             }
         }
     };

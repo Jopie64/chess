@@ -70,6 +70,7 @@ public:
     virtual void reset() =0;
 
     virtual T_moves getMoves(Pos p) =0;
+    virtual T_moves getMoves() =0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

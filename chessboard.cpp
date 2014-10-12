@@ -82,6 +82,7 @@ struct Piece
     inline bool color() const { return m_piece & 0x80; }
     inline Enum piece() const { return Enum(m_piece&0xF); }
     inline bool isEmpty() const { return piece() == nothing; }
+    inline bool isOfColor(bool white) const { if(isEmpty()) return false; return !white == !color(); }
 
     unsigned char m_piece;
 };
@@ -91,14 +92,29 @@ struct Field
     Field():turn(true) //White first
     { memset(pieces,0,sizeof(pieces)); }
 
-    static inline int ix(Pos p) { return p.x + p.y * WIDTH; }
-    Piece get(Pos pos) const { return pieces[ix(pos)]; }
+    static inline int toIx(Pos p) { return p.x + p.y * WIDTH; }
+    static inline Pos toPos(int ix) { return Pos(ix%WIDTH, ix/WIDTH); }
+    Piece get(int i) const { return pieces[i]; }
+    Piece get(Pos pos) const { return pieces[toIx(pos)]; }
 
     bool isInside(Pos pos) const { return pos.x >= 0 && pos.x < WIDTH && pos.y >= 0 && pos.y < HEIGHT; }
 
+    void getMoves(T_moves& moves)
+    {
+        for(int i=0; i < POSITIONS; ++i)
+            if(get(i).isOfColor(turn))
+                getMoves(moves, i);
+    }
+
     void getMoves(T_moves& moves, Pos pos)
     {
-        Piece p = get(pos);
+        getMoves(moves, toIx(pos));
+    }
+
+    void getMoves(T_moves& moves, int i)
+    {
+        Piece p = get(i);
+        Pos pos = toPos(i);
         switch(p.piece())
         {
         default:
@@ -202,10 +218,17 @@ public:
         Piece piece = field.get(p);
         if(piece.piece() == Piece::nothing)
             throw runtime_error("No piece on this position");
-        if(!piece.color() != !field.turn)
+        if(!piece.isOfColor(field.turn))
             throw runtime_error("Not this player's turn");
         T_moves moves;
         field.getMoves(moves, p);
+        return moves;
+    }
+
+    virtual T_moves getMoves() override
+    {
+        T_moves moves;
+        field.getMoves(moves);
         return moves;
     }
 

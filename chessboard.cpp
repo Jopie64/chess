@@ -112,6 +112,27 @@ struct Field
         getMoves(moves, toIx(pos));
     }
 
+    inline int isOkMove(Piece p, Pos to)
+    {
+        if(!isInside(to))
+            return 0;
+        Piece onNewPos = get(to);
+        if(onNewPos.isEmpty())
+            return 1;
+        if(!onNewPos.color() == !p.color())
+            return 0;
+        return 2;
+    }
+
+    inline bool addMove(T_moves& moves, Piece p, Pos from, Pos to)
+    {
+        int ok = isOkMove(p, to);
+        if(ok == 0)
+            return false;
+        moves.emplace_back(Move(from,to,ok != 1));
+        return true;
+    }
+
     void getMoves(T_moves& moves, int i)
     {
         Piece p = get(i);
@@ -150,8 +171,28 @@ struct Field
             if(isInside(newPos) && get(newPos).isEmpty())
                 moves.emplace_back(Move(pos,newPos,false));
         }
-
+        break;
         case Piece::rook:
+        {
+            Pos newPos;
+            for(int i = 0; i < 4; ++i)
+            {
+                newPos = pos;
+                while(true)
+                {
+                    switch(i)
+                    {
+                    case 0: ++newPos.x; break;
+                    case 1: --newPos.x; break;
+                    case 2: ++newPos.y; break;
+                    case 3: --newPos.y; break;
+                    }
+                    if(!addMove(moves,p,pos,newPos))
+                        break;
+                }
+            }
+        }
+        break;
         case Piece::knight:
         case Piece::bishop:
         case Piece::queen:

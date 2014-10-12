@@ -295,6 +295,14 @@ public:
         field.move(move);
     }
 
+    virtual void move(const char* moveStr) override
+    {
+        Move m;
+        string moveStr_ = moveStr;
+        istringstream is= moveStr_;
+        is >> m;
+        move(m);
+    }
 
     Field field;
 };

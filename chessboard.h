@@ -38,9 +38,17 @@ struct Pos
         newPos += that;
         return newPos;
     }
+
     bool operator==(const Pos& that) const
     {
         return x == that.x && y == that.y;
+    }
+
+    bool operator<(const Pos& that) const
+    {
+        if(x < that.x) return true;
+        if(x > that.x) return false;
+        return y < that.y;
     }
 
     bool isValid() const { return x >= 0; }
@@ -56,6 +64,14 @@ struct Move
 {
     Move():capturing(false){}
     Move(Pos from_, Pos to_, bool capturing_ = false):from(from_), to(to_), capturing(capturing_){}
+
+    bool operator<(const Move& that) const
+    {
+        if(from < that.from) return true;
+        if(that.from < from) return false;
+        return to < that.to;
+    }
+
     Pos from;
     Pos to;
     bool capturing;
@@ -77,6 +93,7 @@ public:
     virtual T_moves getMoves(Pos p) =0;
     virtual T_moves getMoves() =0;
     virtual void    move(const Move& move) =0;
+    virtual void    move(const char* move) =0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

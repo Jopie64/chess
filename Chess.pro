@@ -17,7 +17,8 @@ TEMPLATE = app
 QMAKE_CXXFLAGS += -std=gnu++0x
 
 SOURCES += main.cpp \
-    chessboard.cpp
+    chessboard.cpp \
+    tests.cpp
 
 HEADERS += \
     chessboard.h

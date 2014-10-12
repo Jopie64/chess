@@ -23,6 +23,8 @@ void skipWsNow(istream& str)
     str >> skipws;
 }
 
+namespace ChessTest{ void test(); }
+
 int main(int argc, char *argv[])
 {
     using namespace Chess;
@@ -99,6 +101,14 @@ int main(int argc, char *argv[])
                 else
                     params >> move;
                 board->move(move);
+            }
+        },
+        {
+            "test", "t",
+            "Start automatic tests",
+            [&](istream& params)
+            {
+                ChessTest::test();
             }
         }
     };

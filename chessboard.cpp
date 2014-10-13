@@ -134,6 +134,46 @@ struct Field
         return ok == 1;
     }
 
+    inline bool addRookMoves(T_moves& moves, Piece p, Pos from)
+    {
+        for(int i = 0; i < 4; ++i)
+        {
+            Pos newPos = from;
+            while(true)
+            {
+                switch(i)
+                {
+                case 0: ++newPos.x; break;
+                case 1: --newPos.x; break;
+                case 2: ++newPos.y; break;
+                case 3: --newPos.y; break;
+                }
+                if(!addMove(moves,p,from,newPos))
+                    break;
+            }
+        }
+    }
+
+    inline bool addBishopMoves(T_moves& moves, Piece p, Pos from)
+    {
+        for(int i = 0; i < 4; ++i)
+        {
+            Pos newPos = from;
+            while(true)
+            {
+                switch(i)
+                {
+                case 0: ++newPos.x; ++newPos.y; break;
+                case 1: --newPos.x; ++newPos.y; break;
+                case 2: ++newPos.x; --newPos.y; break;
+                case 3: --newPos.x; --newPos.y; break;
+                }
+                if(!addMove(moves,p,from,newPos))
+                    break;
+            }
+        }
+    }
+
     void getMoves(T_moves& moves, int i)
     {
         Piece p = get(i);
@@ -164,26 +204,7 @@ struct Field
             moves.emplace_back(Move(pos,newPos,false));
         }
         break;
-        case Piece::rook:
-        {
-            for(int i = 0; i < 4; ++i)
-            {
-                Pos newPos = pos;
-                while(true)
-                {
-                    switch(i)
-                    {
-                    case 0: ++newPos.x; break;
-                    case 1: --newPos.x; break;
-                    case 2: ++newPos.y; break;
-                    case 3: --newPos.y; break;
-                    }
-                    if(!addMove(moves,p,pos,newPos))
-                        break;
-                }
-            }
-        }
-        break;
+        case Piece::rook: addRookMoves(moves,p,pos); break;
         case Piece::knight:
         {
             Pos newPos = pos;
@@ -211,25 +232,9 @@ struct Field
             addMove(moves,p,pos,newPos);
         }
         break;
-        case Piece::bishop:
-            for(int i = 0; i < 4; ++i)
-            {
-                Pos newPos = pos;
-                while(true)
-                {
-                    switch(i)
-                    {
-                    case 0: ++newPos.x; ++newPos.y; break;
-                    case 1: --newPos.x; ++newPos.y; break;
-                    case 2: ++newPos.x; --newPos.y; break;
-                    case 3: --newPos.x; --newPos.y; break;
-                    }
-                    if(!addMove(moves,p,pos,newPos))
-                        break;
-                }
-            }
-        break;
-        case Piece::queen:
+        case Piece::bishop: addBishopMoves(moves,p,pos); break;
+        case Piece::queen:  addBishopMoves(moves,p,pos);
+                            addRookMoves  (moves,p,pos); break;
         case Piece::king:;
         }
     }

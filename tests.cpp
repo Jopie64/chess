@@ -154,11 +154,23 @@ void test()
     board->move("D2-D3"); //move white pawn, free bishop
     board->move("D7-D6"); //move black pawn, free bishop which was already free
     TEST_EQUAL(isSameMoves(board->getMoves(), parseMoves(
+                               "D1-D2," //<-- queen
                                "C1-D2,C1-E3,C1-F4,C1-G5,C1-H6," //<-- bishop
                                "C3-A2,C3xA4,C3-B1,C3-D5,C3-E4,G1-F3,G1-H3," //<-- knights
                                "B2-B3,B2-B4,B5-B6,B5xC6,D3-D4,E2-E3,E2-E4,"
                                "E6xD6,E6-E3,E6-E4,E6-E5,E6xE7,E6xF6," //<-- rook moves
                                "F2-F3,F2-F4,G2-G3,G2-G4,H2-H3,H2-H4")),"");
+    board->move("D1-D2"); //move queen up
+    board->move("C8-E6"); //black bishop captures rook
+    board->move("D2-F4"); //move queen
+    board->move("E6-B3"); //move bishop
+    TEST_EQUAL(isSameMoves(board->getMoves(), parseMoves(
+                               "F4xA4,F4-B4,F4-C4,F4-D2,F4-D4,F4xD6,F4-E3,F4-E4,F4-E5,F4-F3,F4-F5,F4xF6,F4-G3,F4-G4,F4-G5,F4-H4,F4-H6," //<-- queen
+                               "C1-D2,C1-E3," //<-- bishop
+                               "C3-A2,C3-D1,C3xA4,C3-B1,C3-D5,C3-E4,G1-F3,G1-H3," //<-- knights
+                               "C2xB3,B5-B6,B5xC6,D3-D4,E2-E3,E2-E4,"
+                               "" //<-- rook moves. Rook is gone...
+                               "F2-F3,G2-G3,G2-G4,H2-H3,H2-H4")),"");
     board->print(cout);
 }
 

@@ -131,7 +131,7 @@ struct Field
         if(ok == 0)
             return false;
         moves.emplace_back(Move(from,to,ok != 1));
-        return true;
+        return ok == 1;
     }
 
     void getMoves(T_moves& moves, int i)

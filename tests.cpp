@@ -128,6 +128,9 @@ void test()
     TEST_EXCEPTION([&]{ board->move("E3-E8"); }); //white rook should not be able to capture black king
     TEST_EXCEPTION([&]{ board->move("E3-E2"); }); //white rook should not be able to capture own pawn
 
+    board->move("E3-E6"); //white rook up
+    board->move("B7-B5"); //other pawn down
+    board->move("A4-B5"); //capture pawn
     //board->print(cout);
 }
 

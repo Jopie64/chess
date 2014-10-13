@@ -146,31 +146,22 @@ struct Field
         {
             Pos newPos = pos;
             newPos.y += p.color() ? 1 : -1;
-            if(!isInside(newPos))
-                break;
-            Piece newP = get(newPos);
-            bool bWasFree = false;
-            if(newP.piece() == Piece::nothing)
-            {
-                bWasFree = true;
-                moves.emplace_back(Move(pos,newPos,false));
-            }
             newPos.x -= 1;
-            newP = get(newPos);
-            if(isInside(newPos) && !newP.isEmpty() && newP.color() != p.color())
+            if(isOkMove(p,newPos) == 2)
                 moves.emplace_back(Move(pos,newPos,true));
             newPos.x += 2;
-            newP = get(newPos);
-            if(isInside(newPos) && !newP.isEmpty() && newP.color() != p.color())
+            if(isOkMove(p,newPos) == 2)
                 moves.emplace_back(Move(pos,newPos,true));
             newPos.x -= 1; //Orig pos
-            if(!bWasFree)
+            if(isOkMove(p,newPos) != 1)
                 break;
+            moves.emplace_back(Move(pos,newPos,false));
             if ((p.color() && pos.y != 1) || (!p.color() && pos.y != 6))
-                break;
+                break; //Not able to do 2 moves forward
             newPos.y += p.color() ? 1 : -1;
-            if(isInside(newPos) && get(newPos).isEmpty())
-                moves.emplace_back(Move(pos,newPos,false));
+            if(isOkMove(p,newPos) != 1)
+                break;
+            moves.emplace_back(Move(pos,newPos,false));
         }
         break;
         case Piece::rook:

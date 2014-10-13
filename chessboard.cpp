@@ -166,10 +166,9 @@ struct Field
         break;
         case Piece::rook:
         {
-            Pos newPos;
             for(int i = 0; i < 4; ++i)
             {
-                newPos = pos;
+                Pos newPos = pos;
                 while(true)
                 {
                     switch(i)
@@ -186,6 +185,32 @@ struct Field
         }
         break;
         case Piece::knight:
+        {
+            Pos newPos = pos;
+            //2 up
+            newPos.y += 2;
+            newPos.x += 1;
+            addMove(moves,p,pos,newPos);
+            newPos.x -= 2;
+            addMove(moves,p,pos,newPos);
+            //2 down
+            newPos.y -= 4;
+            addMove(moves,p,pos,newPos);
+            newPos.x += 2;
+            addMove(moves,p,pos,newPos);
+            //2 right
+            newPos.y += 1;
+            newPos.x += 1;
+            addMove(moves,p,pos,newPos);
+            newPos.y += 2;
+            addMove(moves,p,pos,newPos);
+            //2 left
+            newPos.x -= 4;
+            addMove(moves,p,pos,newPos);
+            newPos.y -= 2;
+            addMove(moves,p,pos,newPos);
+        }
+        break;
         case Piece::bishop:
         case Piece::queen:
         case Piece::king:;
@@ -207,14 +232,14 @@ struct Field
 #define PB(p) {Piece(false, Piece::p)},
 const Piece INITIAL_FIELD[]=
 {
-    PW(rook)    PW(bishop)  PW(knight)  PW(queen)   PW(king)    PW(knight)  PW(bishop)  PW(rook)
+    PW(rook)    PW(knight)  PW(bishop)  PW(queen)   PW(king)    PW(bishop)  PW(knight)  PW(rook)
     PW(pawn)    PW(pawn)    PW(pawn)    PW(pawn)    PW(pawn)    PW(pawn)    PW(pawn)    PW(pawn)
     PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing)
     PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing)
     PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing)
     PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing) PB(nothing)
     PB(pawn)    PB(pawn)    PB(pawn)    PB(pawn)    PB(pawn)    PB(pawn)    PB(pawn)    PB(pawn)
-    PB(rook)    PB(bishop)  PB(knight)  PB(queen)   PB(king)    PB(knight)  PB(bishop)  PB(rook)
+    PB(rook)    PB(knight)  PB(bishop)  PB(queen)   PB(king)    PB(bishop)  PB(knight)  PB(rook)
 };
 #undef PW
 #undef PB

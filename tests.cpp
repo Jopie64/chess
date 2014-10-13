@@ -151,7 +151,15 @@ void test()
                                "E6xC6,E6-D6,E6-E3,E6-E4,E6-E5,E6xE7,E6xF6," //<-- rook moves
                                "F2-F3,F2-F4,G2-G3,G2-G4,H2-H3,H2-H4")),"");
 
-    //board->print(cout);
+    board->move("D2-D3"); //move white pawn, free bishop
+    board->move("D7-D6"); //move black pawn, free bishop which was already free
+    TEST_EQUAL(isSameMoves(board->getMoves(), parseMoves(
+                               "C1-D2,C1-E3,C1-F4,C1-G5,C1-H6," //<-- bishop
+                               "C3-A2,C3xA4,C3-B1,C3-D5,C3-E4,G1-F3,G1-H3," //<-- knights
+                               "B2-B3,B2-B4,B5-B6,B5xC6,D3-D4,E2-E3,E2-E4,"
+                               "E6xD6,E6-E3,E6-E4,E6-E5,E6xE7,E6xF6," //<-- rook moves
+                               "F2-F3,F2-F4,G2-G3,G2-G4,H2-H3,H2-H4")),"");
+    board->print(cout);
 }
 
 }//namespace ChessTest

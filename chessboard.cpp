@@ -212,6 +212,23 @@ struct Field
         }
         break;
         case Piece::bishop:
+            for(int i = 0; i < 4; ++i)
+            {
+                Pos newPos = pos;
+                while(true)
+                {
+                    switch(i)
+                    {
+                    case 0: ++newPos.x; ++newPos.y; break;
+                    case 1: --newPos.x; ++newPos.y; break;
+                    case 2: ++newPos.x; --newPos.y; break;
+                    case 3: --newPos.x; --newPos.y; break;
+                    }
+                    if(!addMove(moves,p,pos,newPos))
+                        break;
+                }
+            }
+        break;
         case Piece::queen:
         case Piece::king:;
         }

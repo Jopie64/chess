@@ -25,6 +25,20 @@ void skipWsNow(istream& str)
 
 namespace ChessTest{ void test(); }
 
+void printMoves(const Chess::T_moves& moves)
+{
+    int count = 0;
+    for(auto &i:moves)
+    {
+        if(count != 0)
+            cout << ", ";
+        cout << ++count << ". " << i;
+    }
+    if(count == 0)
+        cout << "No possible moves for piece on this position.";
+    cout << endl;
+}
+
 int main(int argc, char *argv[])
 {
     using namespace Chess;
@@ -68,16 +82,7 @@ int main(int argc, char *argv[])
                 }
                 else
                     moves = board->getMoves();
-                int count = 0;
-                for(auto &i:moves)
-                {
-                    if(count != 0)
-                        cout << ", ";
-                    cout << ++count << ". " << i;
-                }
-                if(count == 0)
-                    cout << "No possible moves for piece on this position.";
-                cout << endl;
+                printMoves(moves);
             }
         },
         {
@@ -86,7 +91,12 @@ int main(int argc, char *argv[])
             [&](istream& params)
             {
                 if(params.peek() == char_traits<char>::eof())
-                    throw runtime_error("Expected move. Use move number or write like e.g. D2-D4");
+                {
+                    moves = board->getMoves();
+                    cout << "Possible moves:" << endl;
+                    printMoves(moves);
+                    return;
+                }
                 skipWsNow(params);
                 Move move;
                 if(isdigit(params.peek()))

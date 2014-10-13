@@ -131,6 +131,11 @@ void test()
     board->move("E3-E6"); //white rook up
     board->move("B7-B5"); //other pawn down
     board->move("A4-B5"); //capture pawn
+    board->move("A5-A4"); //pawn down
+
+    TEST_EQUAL(isSameMoves(board->getMoves(), parseMoves("B2-B3,B2-B4,B5-B6,B5xC6,C2-C3,C2-C4,D2-D3,D2-D4,E2-E3,E2-E4,"
+                                                         "E6xC6,E6-D6,E6-E3,E6-E4,E6-E5,E6xE7,E6-F6,E6-G6,E6-H6," //<-- rook moves
+                                                         "F2-F3,F2-F4,G2-G3,G2-G4,H2-H3,H2-H4")),"");
     //board->print(cout);
 }
 

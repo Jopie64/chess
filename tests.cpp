@@ -154,6 +154,7 @@ void test()
     board->move("D2-D3"); //move white pawn, free bishop
     board->move("D7-D6"); //move black pawn, free bishop which was already free
     TEST_EQUAL(isSameMoves(board->getMoves(), parseMoves(
+                               "E1-D2," //<-- king
                                "D1-D2," //<-- queen
                                "C1-D2,C1-E3,C1-F4,C1-G5,C1-H6," //<-- bishop
                                "C3-A2,C3xA4,C3-B1,C3-D5,C3-E4,G1-F3,G1-H3," //<-- knights
@@ -165,6 +166,7 @@ void test()
     board->move("D2-F4"); //move queen
     board->move("E6-B3"); //move bishop
     TEST_EQUAL(isSameMoves(board->getMoves(), parseMoves(
+                               "E1-D1,E1-D2," //<-- king
                                "F4xA4,F4-B4,F4-C4,F4-D2,F4-D4,F4xD6,F4-E3,F4-E4,F4-E5,F4-F3,F4-F5,F4xF6,F4-G3,F4-G4,F4-G5,F4-H4,F4-H6," //<-- queen
                                "C1-D2,C1-E3," //<-- bishop
                                "C3-A2,C3-D1,C3xA4,C3-B1,C3-D5,C3-E4,G1-F3,G1-H3," //<-- knights

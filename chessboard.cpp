@@ -235,7 +235,27 @@ struct Field
         case Piece::bishop: addBishopMoves(moves,p,pos); break;
         case Piece::queen:  addBishopMoves(moves,p,pos);
                             addRookMoves  (moves,p,pos); break;
-        case Piece::king:;
+        case Piece::king:
+        {
+            Pos newPos = pos;
+            ++newPos.y;
+            addMove(moves,p,pos,newPos);
+            ++newPos.x;
+            addMove(moves,p,pos,newPos);
+            --newPos.y;
+            addMove(moves,p,pos,newPos);
+            --newPos.y;
+            addMove(moves,p,pos,newPos);
+            --newPos.x;
+            addMove(moves,p,pos,newPos);
+            --newPos.x;
+            addMove(moves,p,pos,newPos);
+            ++newPos.y;
+            addMove(moves,p,pos,newPos);
+            ++newPos.y;
+            addMove(moves,p,pos,newPos);
+        }
+        break;
         }
     }
 

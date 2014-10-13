@@ -41,6 +41,7 @@ void printMoves(const Chess::T_moves& moves)
 
 int main(int argc, char *argv[])
 {
+    (void)argc;(void)argv;
     using namespace Chess;
 
     bool quit = false;
@@ -116,7 +117,7 @@ int main(int argc, char *argv[])
         {
             "test", "t",
             "Start automatic tests",
-            [&](istream& params)
+            [&](istream&)
             {
                 ChessTest::test();
             }

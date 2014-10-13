@@ -1,5 +1,6 @@
 #include "chessboard.h"
 #include <string.h>
+#include <sstream>
 
 using namespace std;
 
@@ -298,8 +299,7 @@ public:
     virtual void move(const char* moveStr) override
     {
         Move m;
-        string moveStr_ = moveStr;
-        istringstream is= moveStr_;
+        istringstream is(moveStr);
         is >> m;
         move(m);
     }

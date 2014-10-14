@@ -134,7 +134,7 @@ struct Field
         return ok == 1;
     }
 
-    inline bool addRookMoves(T_moves& moves, Piece p, Pos from)
+    inline void addRookMoves(T_moves& moves, Piece p, Pos from)
     {
         for(int i = 0; i < 4; ++i)
         {
@@ -154,7 +154,7 @@ struct Field
         }
     }
 
-    inline bool addBishopMoves(T_moves& moves, Piece p, Pos from)
+    inline void addBishopMoves(T_moves& moves, Piece p, Pos from)
     {
         for(int i = 0; i < 4; ++i)
         {

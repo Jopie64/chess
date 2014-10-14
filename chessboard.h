@@ -94,6 +94,7 @@ public:
     virtual T_moves getMoves() =0;
     virtual void    move(const Move& move) =0;
     virtual void    move(const char* move) =0;
+    virtual void    undo() =0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

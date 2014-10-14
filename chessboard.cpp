@@ -289,7 +289,7 @@ const Piece INITIAL_FIELD[]=
 class BoardImpl : public ChessBoard
 {
 public:
-    BoardImpl(){}
+    BoardImpl(){reset();}
 
     virtual void print(ostream& os) override
     {
@@ -299,7 +299,7 @@ public:
             {
                 for(pos.x = 0; pos.x < 8; ++pos.x)
                 {
-                    Piece p = field.get(pos);
+                    Piece p = field().get(pos);
                     int colorOffset = p.color() ? AsciiPieceCount * AsciiPieceWidth * AsciiPieceHeight : 0;
                     int asciiPieceNr = (pos.x + pos.y) % 2;
                     if(p.piece() != Piece::nothing)
@@ -315,28 +315,30 @@ public:
 
     virtual void reset() override
     {
-        memcpy(field.pieces, INITIAL_FIELD, sizeof(field.pieces));
-        field.turn = true; //White first
+        fields.clear();
+        fields.emplace_back();
+        memcpy(field().pieces, INITIAL_FIELD, sizeof(field().pieces));
+        field().turn = true; //White first
     }
 
     virtual T_moves getMoves(Pos p) override
     {
-        if(!field.isInside(p))
+        if(!field().isInside(p))
             throw runtime_error("Not a valid position");
-        Piece piece = field.get(p);
+        Piece piece = field().get(p);
         if(piece.piece() == Piece::nothing)
             throw runtime_error("No piece on this position");
-        if(!piece.isOfColor(field.turn))
+        if(!piece.isOfColor(field().turn))
             throw runtime_error("Not this player's turn");
         T_moves moves;
-        field.getMoves(moves, p);
+        field().getMoves(moves, p);
         return moves;
     }
 
     virtual T_moves getMoves() override
     {
         T_moves moves;
-        field.getMoves(moves);
+        field().getMoves(moves);
         return moves;
     }
 
@@ -351,7 +353,8 @@ public:
             }
         if(!valid)
             throw runtime_error("Not a valid move");
-        field.move(move);
+        fields.emplace_back(field());
+        field().move(move);
     }
 
     virtual void move(const char* moveStr) override
@@ -362,7 +365,16 @@ public:
         move(m);
     }
 
-    Field field;
+    virtual void undo()
+    {
+        if(fields.size() <= 1)
+            throw runtime_error("There is no undo buffer left");
+        fields.resize(fields.size()-1);
+    }
+
+    Field& field() { return fields.back(); }
+
+    vector<Field> fields;
 };
 
 PChessBoard makeChessBoard()

@@ -80,10 +80,6 @@ void test()
 
     PChessBoard board = makeChessBoard();
 
-    T_moves expectedMoves;
-
-    TEST_EQUAL(isSameMoves(board->getMoves(), expectedMoves), ""); // No moves expected at all
-
     board->reset();
 
     TEST_EQUAL(isSameMoves(board->getMoves(), parseMoves(

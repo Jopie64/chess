@@ -115,6 +115,14 @@ int main(int argc, char *argv[])
             }
         },
         {
+            "undo", "u",
+            "Undo last move",
+            [&](istream&)
+            {
+                board->undo();
+            }
+        },
+        {
             "test", "t",
             "Start automatic tests",
             [&](istream&)

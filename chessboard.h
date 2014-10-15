@@ -112,7 +112,7 @@ inline T_moveCollector makeMovesInVectorCollector(T_moves& moves, bool turn)
     T_moves* pmoves = &moves;
     return [=](Move m)
     {
-        if(m.pfrom.isOfColor(turn))
+        if(m.pfrom.isOfColor(turn) && (m.pto.isEmpty() || !m.pto.isOfColor(turn)))
             pmoves->emplace_back(m);
     };
 }

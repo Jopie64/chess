@@ -83,19 +83,19 @@ struct Field
 
     bool isInside(Pos pos) const { return pos.x >= 0 && pos.x < WIDTH && pos.y >= 0 && pos.y < HEIGHT; }
 
-    void getMoves(const T_moveCollector& moves)
+    void getMoves(const T_moveCollector& moves) const
     {
         for(int i=0; i < POSITIONS; ++i)
             if(!get(i).isEmpty())
                 getMoves(moves, i);
     }
 
-    void getMoves(const T_moveCollector& moves, Pos pos)
+    void getMoves(const T_moveCollector& moves, Pos pos) const
     {
         getMoves(moves, toIx(pos));
     }
 
-    inline int isOkMove(Move& m)
+    inline int isOkMove(Move& m) const
     {
         if(!isInside(m.to))
             return 0;
@@ -103,11 +103,11 @@ struct Field
         if(m.pto.isEmpty())
             return 1;
         if(!m.pto.color() == !m.pfrom.color())
-            return 0;
+            return 3;
         return 2;
     }
 
-    inline bool addMove(const T_moveCollector& moves, Move& m)
+    inline bool addMove(const T_moveCollector& moves, Move& m) const
     {
         int ok = isOkMove(m);
         if(ok == 0)
@@ -116,7 +116,7 @@ struct Field
         return ok == 1;
     }
 
-    inline void addRookMoves(const T_moveCollector& moves, Move& m)
+    inline void addRookMoves(const T_moveCollector& moves, Move& m) const
     {
         for(int i = 0; i < 4; ++i)
         {
@@ -136,7 +136,7 @@ struct Field
         }
     }
 
-    inline void addBishopMoves(const T_moveCollector& moves, Move& m)
+    inline void addBishopMoves(const T_moveCollector& moves, Move& m) const
     {
         for(int i = 0; i < 4; ++i)
         {
@@ -156,7 +156,7 @@ struct Field
         }
     }
 
-    void getMoves(const T_moveCollector& moves, int i)
+    void getMoves(const T_moveCollector& moves, int i) const
     {
         Move m;
         m.from = toPos(i);
@@ -249,22 +249,49 @@ struct Field
         turn = !turn;
     }
 
+    static int pieceVal(Piece::Enum e)
+    {
+        switch(e)
+        {
+        case Piece::pawn: return 1;
+        case Piece::knight: return 3;
+        case Piece::bishop: return 3;
+        case Piece::rook: return 6;
+        case Piece::queen: return 10;
+        case Piece::king: return 2000000;
+        default: return 0;
+        }
+    }
+
     int evaluate() const
     {
         int total = 0;
-        for(auto i:pieces)
+        for(int ix=0; ix < POSITIONS; ++ix)
         {
+            auto i = pieces[ix];
             int val = 0;
-            switch(i.piece())
+            int pval = pieceVal(i.piece());
+            if(pval == 0)
+                continue; //not a piece
+            val = pval * 3; //Having a piece is 3 times more worth than being able to capture such a piece
+            getMoves([&](Move m)
             {
-            case Piece::pawn: val = 1; break;
-            case Piece::knight: val = 3; break;
-            case Piece::bishop: val = 3; break;
-            case Piece::rook: val = 6; break;
-            case Piece::queen: val = 10; break;
-            case Piece::king: val = 2000000; break;
-            default: continue;
-            }
+                bool bIsKing = m.pto.piece() == Piece::king;
+                bool bIsDefensive = m.pto.isOfColor(m.pfrom.color());
+                if(bIsDefensive && bIsKing)
+                    return; //Defending own king like this is not useful
+                ++val;
+                if(m.pto.isEmpty())
+                    return;
+                //Offensive or defensive moves count even more.
+                //Check counts for 2000 points
+                if(bIsDefensive)
+                    //It is good to defend things from around value 4
+                    //Above or below that value, is less of an issue...
+                    val += max(0, 4 - abs(pieceVal(m.pto.piece())-4));
+                else
+                    val += max(0, (bIsKing ? 2000 : pieceVal(m.pto.piece())) - pval);
+            },ix);
             if(!turn != !i.color())
                 val = -val;
             total += val;

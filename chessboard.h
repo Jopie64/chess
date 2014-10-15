@@ -117,6 +117,8 @@ inline T_moveCollector makeMovesInVectorCollector(T_moves& moves, bool turn)
     };
 }
 
+typedef std::function<void (Move m, int score)> T_moveScore;
+
 
 class ChessBoard
 {
@@ -132,6 +134,7 @@ public:
     virtual void    move(const char* move) =0;
     virtual void    undo() =0;
     virtual int     evaluate() const=0;
+    virtual void    think(const T_moveScore& moves, int depth) =0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

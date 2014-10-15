@@ -288,7 +288,7 @@ struct Field
                 if(bIsDefensive)
                     //It is good to defend things from around value 4
                     //Above or below that value, is less of an issue...
-                    val += max(0, 4 - abs(pieceVal(m.pto.piece())-4));
+                    val += max(0, 3 - abs(pieceVal(m.pto.piece())-4));
                 else
                     val += max(0, (bIsKing ? 2000 : pieceVal(m.pto.piece())) - pval);
             },ix);
@@ -297,6 +297,21 @@ struct Field
             total += val;
         }
         return total;
+    }
+
+    virtual void think(const T_moveScore& moves, int depth)
+    {
+        auto onMove = [&](Move m)
+        {
+            if(m.pto.isOfColor(turn))
+                return; //Don't move to own piece
+            Field workField = *this;
+            workField.move(m);
+            moves(m,-workField.evaluate());
+        };
+        for(int i=0; i < POSITIONS; ++i)
+            if(get(i).isOfColor(turn))
+                getMoves(onMove, i);
     }
 
     Piece pieces[POSITIONS];
@@ -408,6 +423,11 @@ public:
     virtual int evaluate() const
     {
         return field().evaluate();
+    }
+
+    virtual void think(const T_moveScore& moves, int depth)
+    {
+        field().think(moves, depth);
     }
 
     Field& field() { return fields.back(); }

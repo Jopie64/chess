@@ -131,6 +131,16 @@ int main(int argc, char *argv[])
             }
         },
         {
+            "think", "t",
+            "Think of a good move",
+            [&](istream&)
+            {
+                board->think([&](Move m, int score)
+                {
+                    cout << m << " " << score << endl;
+                }, 2);
+            }
+        },        {
             "test", "t",
             "Start automatic tests",
             [&](istream&)

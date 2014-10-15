@@ -37,7 +37,7 @@ ostream& operator <<(ostream& os, const Pos& p)
 
 ostream& operator <<(ostream& os, const Move& m)
 {
-    return os << m.from << (m.capturing ? "x" : "-") << m.to;
+    return os << m.from << (m.capturing() ? "x" : "-") << m.to;
 }
 
 istream& operator >>(istream& is, Pos& p)
@@ -69,24 +69,6 @@ istream& operator >>(istream& is, Move& m)
     return is;
 }
 
-struct Piece
-{
-    enum Enum
-    {
-        nothing, pawn, rook, knight, bishop, queen, king
-    };
-
-    Piece(){}
-    Piece(bool color, Enum piece):m_piece((color ? 0x80 : 0) | piece) {}
-
-
-    inline bool color() const { return m_piece & 0x80; }
-    inline Enum piece() const { return Enum(m_piece&0xF); }
-    inline bool isEmpty() const { return piece() == nothing; }
-    inline bool isOfColor(bool white) const { if(isEmpty()) return false; return !white == !color(); }
-
-    unsigned char m_piece;
-};
 
 struct Field
 {
@@ -104,7 +86,7 @@ struct Field
     void getMoves(const T_moveCollector& moves)
     {
         for(int i=0; i < POSITIONS; ++i)
-            if(get(i).isOfColor(turn))
+            if(!get(i).isEmpty())
                 getMoves(moves, i);
     }
 
@@ -113,62 +95,62 @@ struct Field
         getMoves(moves, toIx(pos));
     }
 
-    inline int isOkMove(Piece p, Pos to)
+    inline int isOkMove(Move& m)
     {
-        if(!isInside(to))
+        if(!isInside(m.to))
             return 0;
-        Piece onNewPos = get(to);
-        if(onNewPos.isEmpty())
+        m.pto = get(m.to);
+        if(m.pto.isEmpty())
             return 1;
-        if(!onNewPos.color() == !p.color())
+        if(!m.pto.color() == !m.pfrom.color())
             return 0;
         return 2;
     }
 
-    inline bool addMove(const T_moveCollector& moves, Piece p, Pos from, Pos to)
+    inline bool addMove(const T_moveCollector& moves, Move& m)
     {
-        int ok = isOkMove(p, to);
+        int ok = isOkMove(m);
         if(ok == 0)
             return false;
-        moves(Move(from,to,ok != 1));
+        moves(m);
         return ok == 1;
     }
 
-    inline void addRookMoves(const T_moveCollector& moves, Piece p, Pos from)
+    inline void addRookMoves(const T_moveCollector& moves, Move& m)
     {
         for(int i = 0; i < 4; ++i)
         {
-            Pos newPos = from;
+            m.to = m.from;
             while(true)
             {
                 switch(i)
                 {
-                case 0: ++newPos.x; break;
-                case 1: --newPos.x; break;
-                case 2: ++newPos.y; break;
-                case 3: --newPos.y; break;
+                case 0: ++m.to.x; break;
+                case 1: --m.to.x; break;
+                case 2: ++m.to.y; break;
+                case 3: --m.to.y; break;
                 }
-                if(!addMove(moves,p,from,newPos))
+                if(!addMove(moves,m))
                     break;
             }
         }
     }
 
-    inline void addBishopMoves(const T_moveCollector& moves, Piece p, Pos from)
+    inline void addBishopMoves(const T_moveCollector& moves, Move& m)
     {
         for(int i = 0; i < 4; ++i)
         {
-            Pos newPos = from;
+            m.to = m.from;
             while(true)
             {
                 switch(i)
                 {
-                case 0: ++newPos.x; ++newPos.y; break;
-                case 1: --newPos.x; ++newPos.y; break;
-                case 2: ++newPos.x; --newPos.y; break;
-                case 3: --newPos.x; --newPos.y; break;
+                case 0: ++m.to.x; ++m.to.y; break;
+                case 1: --m.to.x; ++m.to.y; break;
+                case 2: ++m.to.x; --m.to.y; break;
+                case 3: --m.to.x; --m.to.y; break;
                 }
-                if(!addMove(moves,p,from,newPos))
+                if(!addMove(moves,m))
                     break;
             }
         }
@@ -176,84 +158,85 @@ struct Field
 
     void getMoves(const T_moveCollector& moves, int i)
     {
-        Piece p = get(i);
-        Pos pos = toPos(i);
-        switch(p.piece())
+        Move m;
+        m.from = toPos(i);
+        m.pfrom = get(i);
+        switch(m.pfrom.piece())
         {
         default:
         case Piece::nothing: throw runtime_error("Unable to move this piece");
         case Piece::pawn:
         {
-            Pos newPos = pos;
-            newPos.y += p.color() ? 1 : -1;
-            newPos.x -= 1;
-            if(isOkMove(p,newPos) == 2)
-                moves(Move(pos,newPos,true));
-            newPos.x += 2;
-            if(isOkMove(p,newPos) == 2)
-                moves(Move(pos,newPos,true));
-            newPos.x -= 1; //Orig pos
-            if(isOkMove(p,newPos) != 1)
+            m.to = m.from;
+            m.to.y += m.pfrom.color() ? 1 : -1;
+            m.to.x -= 1;
+            if(isOkMove(m) == 2)
+                moves(m);
+            m.to.x += 2;
+            if(isOkMove(m) == 2)
+                moves(m);
+            m.to.x -= 1; //Orig pos
+            if(isOkMove(m) != 1)
                 break;
-            moves(Move(pos,newPos,false));
-            if ((p.color() && pos.y != 1) || (!p.color() && pos.y != 6))
+            moves(m);
+            if ((m.pfrom.color() && m.from.y != 1) || (!m.pfrom.color() && m.from.y != 6))
                 break; //Not able to do 2 moves forward
-            newPos.y += p.color() ? 1 : -1;
-            if(isOkMove(p,newPos) != 1)
+            m.to.y += m.pfrom.color() ? 1 : -1;
+            if(isOkMove(m) != 1)
                 break;
-            moves(Move(pos,newPos,false));
+            moves(m);
         }
         break;
-        case Piece::rook: addRookMoves(moves,p,pos); break;
+        case Piece::rook: addRookMoves(moves,m); break;
         case Piece::knight:
         {
-            Pos newPos = pos;
+            m.to = m.from;
             //2 up
-            newPos.y += 2;
-            newPos.x += 1;
-            addMove(moves,p,pos,newPos);
-            newPos.x -= 2;
-            addMove(moves,p,pos,newPos);
+            m.to.y += 2;
+            m.to.x += 1;
+            addMove(moves,m);
+            m.to.x -= 2;
+            addMove(moves,m);
             //2 down
-            newPos.y -= 4;
-            addMove(moves,p,pos,newPos);
-            newPos.x += 2;
-            addMove(moves,p,pos,newPos);
+            m.to.y -= 4;
+            addMove(moves,m);
+            m.to.x += 2;
+            addMove(moves,m);
             //2 right
-            newPos.y += 1;
-            newPos.x += 1;
-            addMove(moves,p,pos,newPos);
-            newPos.y += 2;
-            addMove(moves,p,pos,newPos);
+            m.to.y += 1;
+            m.to.x += 1;
+            addMove(moves,m);
+            m.to.y += 2;
+            addMove(moves,m);
             //2 left
-            newPos.x -= 4;
-            addMove(moves,p,pos,newPos);
-            newPos.y -= 2;
-            addMove(moves,p,pos,newPos);
+            m.to.x -= 4;
+            addMove(moves,m);
+            m.to.y -= 2;
+            addMove(moves,m);
         }
         break;
-        case Piece::bishop: addBishopMoves(moves,p,pos); break;
-        case Piece::queen:  addBishopMoves(moves,p,pos);
-                            addRookMoves  (moves,p,pos); break;
+        case Piece::bishop: addBishopMoves(moves,m); break;
+        case Piece::queen:  addBishopMoves(moves,m);
+                            addRookMoves  (moves,m); break;
         case Piece::king:
         {
-            Pos newPos = pos;
-            ++newPos.y;
-            addMove(moves,p,pos,newPos);
-            ++newPos.x;
-            addMove(moves,p,pos,newPos);
-            --newPos.y;
-            addMove(moves,p,pos,newPos);
-            --newPos.y;
-            addMove(moves,p,pos,newPos);
-            --newPos.x;
-            addMove(moves,p,pos,newPos);
-            --newPos.x;
-            addMove(moves,p,pos,newPos);
-            ++newPos.y;
-            addMove(moves,p,pos,newPos);
-            ++newPos.y;
-            addMove(moves,p,pos,newPos);
+            m.to = m.from;
+            ++m.to.y;
+            addMove(moves,m);
+            ++m.to.x;
+            addMove(moves,m);
+            --m.to.y;
+            addMove(moves,m);
+            --m.to.y;
+            addMove(moves,m);
+            --m.to.x;
+            addMove(moves,m);
+            --m.to.x;
+            addMove(moves,m);
+            ++m.to.y;
+            addMove(moves,m);
+            ++m.to.y;
+            addMove(moves,m);
         }
         break;
         }
@@ -354,14 +337,14 @@ public:
         if(!piece.isOfColor(field().turn))
             throw runtime_error("Not this player's turn");
         T_moves moves;
-        field().getMoves(makeMovesInVectorCollector(moves), p);
+        field().getMoves(makeMovesInVectorCollector(moves, field().turn), p);
         return moves;
     }
 
     virtual T_moves getMoves() override
     {
         T_moves moves;
-        field().getMoves(makeMovesInVectorCollector(moves));
+        field().getMoves(makeMovesInVectorCollector(moves, field().turn));
         return moves;
     }
 

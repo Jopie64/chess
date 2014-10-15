@@ -60,10 +60,30 @@ struct Pos
 std::ostream& operator <<(std::ostream& os, const Pos& p);
 std::istream& operator >>(std::istream& is, Pos& m);
 
+struct Piece
+{
+    enum Enum
+    {
+        nothing, pawn, rook, knight, bishop, queen, king
+    };
+
+    Piece(){}
+    Piece(bool):m_piece(0){}
+    Piece(bool color, Enum piece):m_piece((color ? 0x80 : 0) | piece) {}
+
+
+    inline bool color() const { return m_piece & 0x80; }
+    inline Enum piece() const { return Enum(m_piece&0xF); }
+    inline bool isEmpty() const { return piece() == nothing; }
+    inline bool isOfColor(bool white) const { if(isEmpty()) return false; return !white == !color(); }
+
+    unsigned char m_piece;
+};
+
 struct Move
 {
-    Move():capturing(false){}
-    Move(Pos from_, Pos to_, bool capturing_ = false):from(from_), to(to_), capturing(capturing_){}
+    Move(){}
+    Move(Pos from_, Pos to_):from(from_), to(to_), pfrom(false), pto(false){}
 
     bool operator<(const Move& that) const
     {
@@ -72,9 +92,12 @@ struct Move
         return to < that.to;
     }
 
+    bool capturing() const { return !pto.isEmpty() && !pto.isOfColor(pfrom.color()); }
+
     Pos from;
     Pos to;
-    bool capturing;
+    Piece pfrom;
+    Piece pto;
 };
 
 std::ostream& operator <<(std::ostream& os, const Move& m);
@@ -84,10 +107,14 @@ typedef std::function<void (Move m)> T_moveCollector;
 
 typedef std::vector<Move> T_moves;
 
-inline T_moveCollector makeMovesInVectorCollector(T_moves& moves)
+inline T_moveCollector makeMovesInVectorCollector(T_moves& moves, bool turn)
 {
     T_moves* pmoves = &moves;
-    return [=](Move m){ pmoves->emplace_back(m); };
+    return [=](Move m)
+    {
+        if(m.pfrom.isOfColor(turn))
+            pmoves->emplace_back(m);
+    };
 }
 
 

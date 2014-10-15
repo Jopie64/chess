@@ -101,14 +101,14 @@ struct Field
 
     bool isInside(Pos pos) const { return pos.x >= 0 && pos.x < WIDTH && pos.y >= 0 && pos.y < HEIGHT; }
 
-    void getMoves(T_moves& moves)
+    void getMoves(const T_moveCollector& moves)
     {
         for(int i=0; i < POSITIONS; ++i)
             if(get(i).isOfColor(turn))
                 getMoves(moves, i);
     }
 
-    void getMoves(T_moves& moves, Pos pos)
+    void getMoves(const T_moveCollector& moves, Pos pos)
     {
         getMoves(moves, toIx(pos));
     }
@@ -125,16 +125,16 @@ struct Field
         return 2;
     }
 
-    inline bool addMove(T_moves& moves, Piece p, Pos from, Pos to)
+    inline bool addMove(const T_moveCollector& moves, Piece p, Pos from, Pos to)
     {
         int ok = isOkMove(p, to);
         if(ok == 0)
             return false;
-        moves.emplace_back(Move(from,to,ok != 1));
+        moves(Move(from,to,ok != 1));
         return ok == 1;
     }
 
-    inline void addRookMoves(T_moves& moves, Piece p, Pos from)
+    inline void addRookMoves(const T_moveCollector& moves, Piece p, Pos from)
     {
         for(int i = 0; i < 4; ++i)
         {
@@ -154,7 +154,7 @@ struct Field
         }
     }
 
-    inline void addBishopMoves(T_moves& moves, Piece p, Pos from)
+    inline void addBishopMoves(const T_moveCollector& moves, Piece p, Pos from)
     {
         for(int i = 0; i < 4; ++i)
         {
@@ -174,7 +174,7 @@ struct Field
         }
     }
 
-    void getMoves(T_moves& moves, int i)
+    void getMoves(const T_moveCollector& moves, int i)
     {
         Piece p = get(i);
         Pos pos = toPos(i);
@@ -188,20 +188,20 @@ struct Field
             newPos.y += p.color() ? 1 : -1;
             newPos.x -= 1;
             if(isOkMove(p,newPos) == 2)
-                moves.emplace_back(Move(pos,newPos,true));
+                moves(Move(pos,newPos,true));
             newPos.x += 2;
             if(isOkMove(p,newPos) == 2)
-                moves.emplace_back(Move(pos,newPos,true));
+                moves(Move(pos,newPos,true));
             newPos.x -= 1; //Orig pos
             if(isOkMove(p,newPos) != 1)
                 break;
-            moves.emplace_back(Move(pos,newPos,false));
+            moves(Move(pos,newPos,false));
             if ((p.color() && pos.y != 1) || (!p.color() && pos.y != 6))
                 break; //Not able to do 2 moves forward
             newPos.y += p.color() ? 1 : -1;
             if(isOkMove(p,newPos) != 1)
                 break;
-            moves.emplace_back(Move(pos,newPos,false));
+            moves(Move(pos,newPos,false));
         }
         break;
         case Piece::rook: addRookMoves(moves,p,pos); break;
@@ -264,6 +264,29 @@ struct Field
         set(move.to, get(move.from));
         set(move.from, Piece());
         turn = !turn;
+    }
+
+    int evaluate() const
+    {
+        int total = 0;
+        for(auto i:pieces)
+        {
+            int val = 0;
+            switch(i.piece())
+            {
+            case Piece::pawn: val = 1; break;
+            case Piece::knight: val = 3; break;
+            case Piece::bishop: val = 3; break;
+            case Piece::rook: val = 6; break;
+            case Piece::queen: val = 10; break;
+            case Piece::king: val = 2000000; break;
+            default: continue;
+            }
+            if(!turn != !i.color())
+                val = -val;
+            total += val;
+        }
+        return total;
     }
 
     Piece pieces[POSITIONS];
@@ -331,14 +354,14 @@ public:
         if(!piece.isOfColor(field().turn))
             throw runtime_error("Not this player's turn");
         T_moves moves;
-        field().getMoves(moves, p);
+        field().getMoves(makeMovesInVectorCollector(moves), p);
         return moves;
     }
 
     virtual T_moves getMoves() override
     {
         T_moves moves;
-        field().getMoves(moves);
+        field().getMoves(makeMovesInVectorCollector(moves));
         return moves;
     }
 
@@ -372,7 +395,13 @@ public:
         fields.resize(fields.size()-1);
     }
 
+    virtual int evaluate() const
+    {
+        return field().evaluate();
+    }
+
     Field& field() { return fields.back(); }
+    const Field& field() const { return fields.back(); }
 
     vector<Field> fields;
 };

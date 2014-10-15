@@ -123,6 +123,14 @@ int main(int argc, char *argv[])
             }
         },
         {
+            "evaluate", "e",
+            "Evaluate current position",
+            [&](istream&)
+            {
+                cout << "Evaluation value: " << board->evaluate() << endl;
+            }
+        },
+        {
             "test", "t",
             "Start automatic tests",
             [&](istream&)

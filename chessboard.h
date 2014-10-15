@@ -80,7 +80,16 @@ struct Move
 std::ostream& operator <<(std::ostream& os, const Move& m);
 std::istream& operator >>(std::istream& is, Move& m);
 
+typedef std::function<void (Move m)> T_moveCollector;
+
 typedef std::vector<Move> T_moves;
+
+inline T_moveCollector makeMovesInVectorCollector(T_moves& moves)
+{
+    T_moves* pmoves = &moves;
+    return [=](Move m){ pmoves->emplace_back(m); };
+}
+
 
 class ChessBoard
 {
@@ -95,6 +104,7 @@ public:
     virtual void    move(const Move& move) =0;
     virtual void    move(const char* move) =0;
     virtual void    undo() =0;
+    virtual int     evaluate() const=0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

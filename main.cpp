@@ -2,6 +2,7 @@
 #include <functional>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 #include "chessboard.h"
 
 using namespace std;
@@ -135,10 +136,25 @@ int main(int argc, char *argv[])
             "Think of a good move",
             [&](istream&)
             {
+                typedef pair<Move,int> T;
+                vector<T> moveScore;
                 board->think([&](Move m, int score)
                 {
-                    cout << m << " " << score << endl;
+                    moveScore.emplace_back(T(m,score));
                 }, 2);
+                sort(moveScore.begin(), moveScore.end(), [](const T& l, const T& r) {return l.second > r.second;});
+                moves.clear();
+                int count = 0;
+                for(auto &i:moveScore)
+                {
+                    moves.push_back(i.first);
+                    if(count != 0)
+                        cout << ", ";
+                    cout << ++count << ". " << i.first << ":" << i.second;
+                }
+                if(count == 0)
+                    cout << "No possible moves.";
+                cout << endl;
             }
         },        {
             "test", "t",

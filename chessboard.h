@@ -103,7 +103,7 @@ struct Move
 std::ostream& operator <<(std::ostream& os, const Move& m);
 std::istream& operator >>(std::istream& is, Move& m);
 
-typedef std::function<void (Move m)> T_moveCollector;
+typedef std::function<bool (Move m)> T_moveCollector;
 
 typedef std::vector<Move> T_moves;
 
@@ -114,6 +114,7 @@ inline T_moveCollector makeMovesInVectorCollector(T_moves& moves, bool turn)
     {
         if(m.pfrom.isOfColor(turn) && (m.pto.isEmpty() || !m.pto.isOfColor(turn)))
             pmoves->emplace_back(m);
+        return true;
     };
 }
 

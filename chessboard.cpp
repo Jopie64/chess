@@ -17,6 +17,8 @@ const int WIDTH = 8;
 const int HEIGHT = 8;
 const int POSITIONS = WIDTH * HEIGHT;
 
+const int WINDOWMAX = 0x7FFFFFFF;
+
 const int AsciiPieceWidth = 5;
 const int AsciiPieceHeight = 3;
 const int AsciiPieceCount = 8;
@@ -88,13 +90,14 @@ struct Field
     {
         for(int i=0; i < POSITIONS; ++i)
             if(!get(i).isEmpty())
-                getMoves(moves, i);
+                if(!getMoves(moves, i))
+                    return;
     }
 
     template<class T_moveCollector>
-    void getMoves(const T_moveCollector& moves, Pos pos) const
+    bool getMoves(const T_moveCollector& moves, Pos pos) const
     {
-        getMoves(moves, toIx(pos));
+        return getMoves(moves, toIx(pos));
     }
 
     inline int isOkMove(Move& m) const
@@ -110,23 +113,25 @@ struct Field
     }
 
     template<class T_moveCollector>
-    inline bool addMove(const T_moveCollector& moves, Move& m) const
+    inline bool addMove(const T_moveCollector& moves, Move& m, bool& stop) const
     {
         int ok = isOkMove(m);
         if(ok == 0)
             return false;
-        moves(m);
+        if(!moves(m))
+            stop = true;
         return ok == 1;
     }
 
     template<class T_moveCollector>
-    inline void addRookMoves(const T_moveCollector& moves, Move& m) const
+    inline void addRookMoves(const T_moveCollector& moves, Move& m, bool& stop) const
     {
         for(int i = 0; i < 4; ++i)
         {
             m.to = m.from;
             while(true)
             {
+                if(stop) return;
                 switch(i)
                 {
                 case 0: ++m.to.x; break;
@@ -134,20 +139,21 @@ struct Field
                 case 2: ++m.to.y; break;
                 case 3: --m.to.y; break;
                 }
-                if(!addMove(moves,m))
+                if(!addMove(moves,m,stop))
                     break;
             }
         }
     }
 
     template<class T_moveCollector>
-    inline void addBishopMoves(const T_moveCollector& moves, Move& m) const
+    inline void addBishopMoves(const T_moveCollector& moves, Move& m, bool& stop) const
     {
         for(int i = 0; i < 4; ++i)
         {
             m.to = m.from;
             while(true)
             {
+                if(stop) return;
                 switch(i)
                 {
                 case 0: ++m.to.x; ++m.to.y; break;
@@ -155,15 +161,16 @@ struct Field
                 case 2: ++m.to.x; --m.to.y; break;
                 case 3: --m.to.x; --m.to.y; break;
                 }
-                if(!addMove(moves,m))
+                if(!addMove(moves,m,stop))
                     break;
             }
         }
     }
 
     template<class T_moveCollector>
-    void getMoves(const T_moveCollector& moves, int i) const
+    bool getMoves(const T_moveCollector& moves, int i) const
     {
+        bool stop = false;
         Move m;
         m.from = toPos(i);
         m.pfrom = get(i);
@@ -177,75 +184,76 @@ struct Field
             m.to.y += m.pfrom.color() ? 1 : -1;
             m.to.x -= 1;
             if(isOkMove(m) == 2)
-                moves(m);
+                if(!moves(m)) return false;
             m.to.x += 2;
             if(isOkMove(m) == 2)
-                moves(m);
+                if(!moves(m)) return false;
             m.to.x -= 1; //Orig pos
             if(isOkMove(m) != 1)
                 break;
-            moves(m);
+            if(!moves(m)) return false;
             if ((m.pfrom.color() && m.from.y != 1) || (!m.pfrom.color() && m.from.y != 6))
                 break; //Not able to do 2 moves forward
             m.to.y += m.pfrom.color() ? 1 : -1;
             if(isOkMove(m) != 1)
                 break;
-            moves(m);
+            if(!moves(m)) return false;
         }
         break;
-        case Piece::rook: addRookMoves(moves,m); break;
+        case Piece::rook: addRookMoves(moves,m,stop); if(stop) return false; break;
         case Piece::knight:
         {
             m.to = m.from;
             //2 up
             m.to.y += 2;
             m.to.x += 1;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             m.to.x -= 2;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             //2 down
             m.to.y -= 4;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             m.to.x += 2;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             //2 right
             m.to.y += 1;
             m.to.x += 1;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             m.to.y += 2;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             //2 left
             m.to.x -= 4;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             m.to.y -= 2;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
         }
         break;
-        case Piece::bishop: addBishopMoves(moves,m); break;
-        case Piece::queen:  addBishopMoves(moves,m);
-                            addRookMoves  (moves,m); break;
+        case Piece::bishop: addBishopMoves(moves,m,stop); if(stop)return false;break;
+        case Piece::queen:  addBishopMoves(moves,m,stop); if(stop)return false;
+                            addRookMoves  (moves,m,stop); if(stop)return false; break;
         case Piece::king:
         {
             m.to = m.from;
             ++m.to.y;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             ++m.to.x;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             --m.to.y;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             --m.to.y;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             --m.to.x;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             --m.to.x;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             ++m.to.y;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
             ++m.to.y;
-            addMove(moves,m);
+            addMove(moves,m,stop);if(stop) return false;
         }
         break;
         }
+        return true;
     }
 
     void move(const Move& move)
@@ -285,10 +293,10 @@ struct Field
                 bool bIsKing = m.pto.piece() == Piece::king;
                 bool bIsDefensive = m.pto.isOfColor(m.pfrom.color());
                 if(bIsDefensive && bIsKing)
-                    return; //Defending own king like this is not useful
+                    return true; //Defending own king like this is not useful
                 ++val;
                 if(m.pto.isEmpty())
-                    return;
+                    return true;
                 //Offensive or defensive moves count even more.
                 //Check counts for 2000 points
                 if(bIsDefensive)
@@ -297,6 +305,7 @@ struct Field
                     val += max(0, 3 - abs(pieceVal(m.pto.piece())-4));
                 else
                     val += max(0, (bIsKing ? 2000 : pieceVal(m.pto.piece())) - pval);
+                return true;
             },ix);
             if(!turn != !i.color())
                 val = -val;
@@ -307,37 +316,52 @@ struct Field
 
     void think(const T_moveScore& moves, int depth)
     {
+        int a = -WINDOWMAX;
+        int b = WINDOWMAX;
         auto onMove = [&](Move m)
         {
             if(m.pto.isOfColor(turn))
-                return; //Don't move to own piece
+                return true; //Don't move to own piece
             Field workField = *this;
             workField.move(m);
-            moves(m,-workField.score(depth));
+            int score = -workField.score(depth, -b, -a);
+            bool isSameScore = score == a;
+            if(score > a)
+                a = score;
+            //alpha/beta pruning causes even or worse scores to be pruned
+            //in which case the current highest score is returned. But it is actually
+            //probably a worse score, so it should not be the first choice.
+            //Thats why 1 is subtracted for follow up 'best' scores, which makes sure
+            //it is not the first choice.
+            moves(m, score * 2 - (isSameScore ? 1 : 0));
+            return true;
         };
         for(int i=0; i < POSITIONS; ++i)
             if(get(i).isOfColor(turn))
                 getMoves(onMove, i);
     }
 
-    int score(int depth)
+    int score(int depth, int a, int b)
     {
         if(depth <= 0)
             return evaluate();
-        int highestScore = -2000000000;
         auto onMove = [&](Move m)
         {
             Field workField = *this;
             workField.move(m);
-            int newScore = -workField.score(depth - 1);
-            if(newScore > highestScore)
-                highestScore = newScore;
+            int newScore = -workField.score(depth - 1, -b, -a);
+            if(newScore > a)
+                a = newScore;
+            if(a >= b)
+                return false; //beta cutoff
+            return true;
         };
 
         for(int i=0; i < POSITIONS; ++i)
             if(get(i).isOfColor(turn))
-                getMoves(onMove, i);
-        return highestScore;
+                if(!getMoves(onMove, i))
+                    return a;
+        return a;
     }
 
     Piece pieces[POSITIONS];

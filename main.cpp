@@ -134,14 +134,18 @@ int main(int argc, char *argv[])
         {
             "think", "t",
             "Think of a good move",
-            [&](istream&)
+            [&](istream& params)
             {
+                int depth = -1;
+                params >> depth;
+                if(depth < 0)
+                    depth = 2;
                 typedef pair<Move,int> T;
                 vector<T> moveScore;
                 board->think([&](Move m, int score)
                 {
                     moveScore.emplace_back(T(m,score));
-                }, 2);
+                }, depth);
                 sort(moveScore.begin(), moveScore.end(), [](const T& l, const T& r) {return l.second > r.second;});
                 moves.clear();
                 int count = 0;

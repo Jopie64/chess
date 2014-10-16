@@ -245,7 +245,7 @@ struct Field
     void move(const Move& move)
     {
         set(move.to, get(move.from));
-        set(move.from, Piece());
+        set(move.from, Piece(false));
         turn = !turn;
     }
 
@@ -299,7 +299,7 @@ struct Field
         return total;
     }
 
-    virtual void think(const T_moveScore& moves, int depth)
+    void think(const T_moveScore& moves, int depth)
     {
         auto onMove = [&](Move m)
         {
@@ -307,11 +307,31 @@ struct Field
                 return; //Don't move to own piece
             Field workField = *this;
             workField.move(m);
-            moves(m,-workField.evaluate());
+            moves(m,-workField.score(depth));
         };
         for(int i=0; i < POSITIONS; ++i)
             if(get(i).isOfColor(turn))
                 getMoves(onMove, i);
+    }
+
+    int score(int depth)
+    {
+        if(depth <= 0)
+            return evaluate();
+        int highestScore = -2000000000;
+        auto onMove = [&](Move m)
+        {
+            Field workField = *this;
+            workField.move(m);
+            int newScore = -workField.score(depth - 1);
+            if(newScore > highestScore)
+                highestScore = newScore;
+        };
+
+        for(int i=0; i < POSITIONS; ++i)
+            if(get(i).isOfColor(turn))
+                getMoves(onMove, i);
+        return highestScore;
     }
 
     Piece pieces[POSITIONS];

@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
                 int depth = -1;
                 params >> depth;
                 if(depth < 0)
-                    depth = 2;
+                    depth = 3;
                 typedef pair<Move,int> T;
                 vector<T> moveScore;
                 board->think([&](Move m, int score)

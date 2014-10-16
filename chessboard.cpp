@@ -83,6 +83,7 @@ struct Field
 
     bool isInside(Pos pos) const { return pos.x >= 0 && pos.x < WIDTH && pos.y >= 0 && pos.y < HEIGHT; }
 
+    template<class T_moveCollector>
     void getMoves(const T_moveCollector& moves) const
     {
         for(int i=0; i < POSITIONS; ++i)
@@ -90,6 +91,7 @@ struct Field
                 getMoves(moves, i);
     }
 
+    template<class T_moveCollector>
     void getMoves(const T_moveCollector& moves, Pos pos) const
     {
         getMoves(moves, toIx(pos));
@@ -107,6 +109,7 @@ struct Field
         return 2;
     }
 
+    template<class T_moveCollector>
     inline bool addMove(const T_moveCollector& moves, Move& m) const
     {
         int ok = isOkMove(m);
@@ -116,6 +119,7 @@ struct Field
         return ok == 1;
     }
 
+    template<class T_moveCollector>
     inline void addRookMoves(const T_moveCollector& moves, Move& m) const
     {
         for(int i = 0; i < 4; ++i)
@@ -136,6 +140,7 @@ struct Field
         }
     }
 
+    template<class T_moveCollector>
     inline void addBishopMoves(const T_moveCollector& moves, Move& m) const
     {
         for(int i = 0; i < 4; ++i)
@@ -156,6 +161,7 @@ struct Field
         }
     }
 
+    template<class T_moveCollector>
     void getMoves(const T_moveCollector& moves, int i) const
     {
         Move m;

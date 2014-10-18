@@ -1,6 +1,7 @@
 #include "chessboard.h"
 #include <string.h>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -314,31 +315,44 @@ struct Field
         return total;
     }
 
-    void think(const T_moveScore& moves, int depth)
+    void think(const T_moveScore& moves, int maxDepth)
     {
-        int a = -WINDOWMAX;
-        int b = WINDOWMAX;
-        auto onMove = [&](Move m)
-        {
-            if(m.pto.isOfColor(turn))
-                return true; //Don't move to own piece
-            Field workField = *this;
-            workField.move(m);
-            int score = -workField.score(depth, -b, -a);
-            bool isSameScore = score == a;
-            if(score > a)
-                a = score;
-            //alpha/beta pruning causes even or worse scores to be pruned
-            //in which case the current highest score is returned. But it is actually
-            //probably a worse score, so it should not be the first choice.
-            //Thats why 1 is subtracted for follow up 'best' scores, which makes sure
-            //it is not the first choice.
-            moves(m, score * 2 - (isSameScore ? 1 : 0));
-            return true;
-        };
+        vector<MoveScore> moveScores;
         for(int i=0; i < POSITIONS; ++i)
             if(get(i).isOfColor(turn))
-                getMoves(onMove, i);
+                getMoves([&](Move m) {
+                    if(m.pto.isOfColor(turn))
+                        return true;
+                    moveScores.emplace_back(m,0);
+                    return true;
+                }, i);
+        for(int depth = 0; depth <= maxDepth; ++depth)
+        {
+            int a = -WINDOWMAX;
+            int b = WINDOWMAX;
+            for(auto &mvs : moveScores)
+            {
+                Move &m = mvs.move;
+                Field workField = *this;
+                workField.move(m);
+                int score = -workField.score(depth, -b, -a);
+                bool isSameScore = score == a;
+                if(score > a)
+                    a = score;
+                //alpha/beta pruning causes even or worse scores to be pruned
+                //in which case the current highest score is returned. But it is actually
+                //probably a worse score, so it should not be the first choice.
+                //Thats why 1 is subtracted for follow up 'best' scores, which makes sure
+                //it is not the first choice.
+                mvs.score = score * 2 - (isSameScore ? 1 : 0);
+            }
+            sort(moveScores.begin(), moveScores.end(),
+                [](const MoveScore& l, const MoveScore& r) {return l.score > r.score;});
+        }
+        for(auto &mvs : moveScores)
+        {
+            moves(mvs.move,mvs.score);
+        }
     }
 
     int score(int depth, int a, int b)

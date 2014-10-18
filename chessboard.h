@@ -100,6 +100,15 @@ struct Move
     Piece pto;
 };
 
+struct MoveScore
+{
+    MoveScore():score(0){}
+    MoveScore(Move move_, int score_):move(move_),score(score_){}
+
+    Move move;
+    int score;
+};
+
 std::ostream& operator <<(std::ostream& os, const Move& m);
 std::istream& operator >>(std::istream& is, Move& m);
 

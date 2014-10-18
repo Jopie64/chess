@@ -140,21 +140,21 @@ int main(int argc, char *argv[])
                 params >> depth;
                 if(depth < 0)
                     depth = 3;
-                typedef pair<Move,int> T;
-                vector<T> moveScore;
+                vector<MoveScore> moveScore;
                 board->think([&](Move m, int score)
                 {
-                    moveScore.emplace_back(T(m,score));
+                    moveScore.emplace_back(MoveScore(m,score));
                 }, depth);
-                sort(moveScore.begin(), moveScore.end(), [](const T& l, const T& r) {return l.second > r.second;});
+                sort(moveScore.begin(), moveScore.end(),
+                    [](const MoveScore& l, const MoveScore& r) {return l.score > r.score;});
                 moves.clear();
                 int count = 0;
                 for(auto &i:moveScore)
                 {
-                    moves.push_back(i.first);
+                    moves.push_back(i.move);
                     if(count != 0)
                         cout << ", ";
-                    cout << ++count << ". " << i.first << ":" << i.second;
+                    cout << ++count << ". " << i.move << ":" << i.score;
                 }
                 if(count == 0)
                     cout << "No possible moves.";

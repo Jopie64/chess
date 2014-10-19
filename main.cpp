@@ -7,6 +7,10 @@
 
 using namespace std;
 
+// Chess puzzle: https://plus.google.com/113949950987925894811/posts/d5wLuJr2Bbh
+// K7/8/4R3/8/8/8/6Q1/3kr2q w
+
+
 struct Command
 {
     string command;

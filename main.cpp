@@ -160,7 +160,17 @@ int main(int argc, char *argv[])
                     cout << "No possible moves.";
                 cout << endl;
             }
-        },        {
+        },
+        {
+            "fen", "f",
+            "Input or output chess board in FEN notation",
+            [&](istream&)
+            {
+                // http://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
+                cout << board->fen() << endl;
+            }
+        },
+        {
             "test", "t",
             "Start automatic tests",
             [&](istream&)

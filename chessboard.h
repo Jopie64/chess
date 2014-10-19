@@ -145,6 +145,8 @@ public:
     virtual void    undo() =0;
     virtual int     evaluate() const=0;
     virtual void    think(const T_moveScore& moves, int depth) =0;
+    virtual std::string
+                    fen() =0; //http://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

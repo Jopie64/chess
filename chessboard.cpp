@@ -378,6 +378,54 @@ struct Field
         return a;
     }
 
+    static char fenChar(Piece p)
+    {
+        char c = 0;
+        switch(p.piece())
+        {
+        case Piece::pawn:   c = 'p'; break;
+        case Piece::knight: c = 'n'; break;
+        case Piece::bishop: c = 'b'; break;
+        case Piece::rook:   c = 'r'; break;
+        case Piece::queen:  c = 'q'; break;
+        case Piece::king:   c = 'k'; break;
+        default:            c = 0;
+        }
+        if(p.color())
+            c = toupper(c);
+        return c;
+    }
+
+    string fen() const
+    {
+        string ret;
+        int count = 0;
+        int emptyCount = 0;
+        for(auto i:pieces)
+        {
+            char f = fenChar(i);
+            bool nextLine = count != 0 && count % 8 == 0;
+            if(emptyCount > 0 && (nextLine || f != 0))
+            {
+                ret += char('0' + emptyCount);
+                emptyCount = 0;
+            }
+            if(nextLine)
+                ret += '/';
+            if(f == 0)
+                emptyCount++;
+            else
+                ret += f;
+            ++count;
+        }
+        ret += ' ';
+        if(turn)
+            ret += 'w';
+        else
+            ret += 'b';
+        return ret;
+    }
+
     Piece pieces[POSITIONS];
     bool  turn;
 };
@@ -492,6 +540,11 @@ public:
     virtual void think(const T_moveScore& moves, int depth)
     {
         field().think(moves, depth);
+    }
+
+    virtual string fen()
+    {
+        return field().fen();
     }
 
     Field& field() { return fields.back(); }

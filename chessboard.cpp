@@ -18,7 +18,7 @@ const int WIDTH = 8;
 const int HEIGHT = 8;
 const int POSITIONS = WIDTH * HEIGHT;
 
-const int WINDOWMAX = 0x7FFFFFFF;
+const int WINDOWMAX = 0x7FFFFFFF / 2;
 
 const int AsciiPieceWidth = 5;
 const int AsciiPieceHeight = 3;
@@ -280,6 +280,8 @@ struct Field
 
     int evaluate() const
     {
+        if(!hasKing(turn)) return -WINDOWMAX;
+        if(!hasKing(!turn)) return WINDOWMAX;
         int total = 0;
         for(int ix=0; ix < POSITIONS; ++ix)
         {
@@ -355,10 +357,17 @@ struct Field
         }
     }
 
+    inline bool hasKing(bool color) const
+    {
+        return !!memchr(pieces, Piece(color,Piece::king).m_piece, sizeof(pieces));
+    }
+
     int score(int depth, int a, int b)
     {
         if(depth <= 0)
             return evaluate();
+        if(!hasKing(turn)) return -WINDOWMAX;
+        if(!hasKing(!turn)) return WINDOWMAX;
         auto onMove = [&](Move m)
         {
             Field workField = *this;

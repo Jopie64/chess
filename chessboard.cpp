@@ -317,7 +317,7 @@ struct Field
         return total;
     }
 
-    void think(const T_moveScore& moves, int maxDepth)
+    void think(const T_moveProgress& moves, int maxDepth)
     {
         vector<MoveScore> moveScores;
         for(int i=0; i < POSITIONS; ++i)
@@ -328,6 +328,8 @@ struct Field
                     moveScores.emplace_back(m,0);
                     return true;
                 }, i);
+        if(moveScores.empty())
+            throw runtime_error("No moves possible.");
         for(int depth = 0; depth <= maxDepth; ++depth)
         {
             int a = -WINDOWMAX;
@@ -350,10 +352,7 @@ struct Field
             }
             sort(moveScores.begin(), moveScores.end(),
                 [](const MoveScore& l, const MoveScore& r) {return l.score > r.score;});
-        }
-        for(auto &mvs : moveScores)
-        {
-            moves(mvs.move,mvs.score);
+            moves(moveScores.front().move, depth, moveScores.front().score);
         }
     }
 
@@ -601,7 +600,7 @@ public:
         return field().evaluate();
     }
 
-    virtual void think(const T_moveScore& moves, int depth) override
+    virtual void think(const T_moveProgress& moves, int depth) override
     {
         field().think(moves, depth);
     }

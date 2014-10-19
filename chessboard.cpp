@@ -398,7 +398,61 @@ struct Field
 
     string fen() const
     {
-        string ret;
+        ostringstream os;
+        fen(os);
+        return os.str();
+    }
+
+    void fen(istream& is)
+    {
+        memset(&pieces,0,sizeof(pieces));
+        turn = true;
+        int pos = 0;
+        is >> noskipws;
+        //skip initial ws
+        char c = ' ';
+        while(isspace(is.peek()))
+            is >> c;
+        while(is)
+        {
+            char c;
+            is >> c;
+            Piece p(false);
+            if(c == ' ')
+                break;
+            switch(c)
+            {
+            case '/':
+                continue;
+            case 'r': p = Piece(false, Piece::rook); break;
+            case 'R': p = Piece(true,  Piece::rook); break;
+            case 'n': p = Piece(false, Piece::knight); break;
+            case 'N': p = Piece(true,  Piece::knight); break;
+            case 'b': p = Piece(false, Piece::bishop); break;
+            case 'B': p = Piece(true,  Piece::bishop); break;
+            case 'q': p = Piece(false, Piece::queen); break;
+            case 'Q': p = Piece(true,  Piece::queen); break;
+            case 'k': p = Piece(false, Piece::king); break;
+            case 'K': p = Piece(true,  Piece::king); break;
+            case 'p': p = Piece(false, Piece::pawn); break;
+            case 'P': p = Piece(true,  Piece::pawn); break;
+            default:
+                pos += c - '0';
+                continue;
+            }
+            if(pos >= POSITIONS)
+                throw runtime_error("Too many pieces");
+            pieces[pos++] = p;
+        }
+        if(pos != POSITIONS)
+            throw runtime_error("Too few pieces");
+        string t;
+        is >> t;
+        turn = t == "w";
+    }
+
+    void fen(ostream& os) const
+    {
         int count = 0;
         int emptyCount = 0;
         for(auto i:pieces)
@@ -407,23 +461,24 @@ struct Field
             bool nextLine = count != 0 && count % 8 == 0;
             if(emptyCount > 0 && (nextLine || f != 0))
             {
-                ret += char('0' + emptyCount);
+                os << char('0' + emptyCount);
                 emptyCount = 0;
             }
             if(nextLine)
-                ret += '/';
+                os << '/';
             if(f == 0)
                 emptyCount++;
             else
-                ret += f;
+                os << f;
             ++count;
         }
-        ret += ' ';
+        if(emptyCount > 0)
+            os << char('0' + emptyCount);
+        os << ' ';
         if(turn)
-            ret += 'w';
+            os << 'w';
         else
-            ret += 'b';
-        return ret;
+            os << 'b';
     }
 
     Piece pieces[POSITIONS];
@@ -525,26 +580,31 @@ public:
         move(m);
     }
 
-    virtual void undo()
+    virtual void undo() override
     {
         if(fields.size() <= 1)
             throw runtime_error("There is no undo buffer left");
         fields.resize(fields.size()-1);
     }
 
-    virtual int evaluate() const
+    virtual int evaluate() const override
     {
         return field().evaluate();
     }
 
-    virtual void think(const T_moveScore& moves, int depth)
+    virtual void think(const T_moveScore& moves, int depth) override
     {
         field().think(moves, depth);
     }
 
-    virtual string fen()
+    virtual string fen() const override
     {
         return field().fen();
+    }
+
+    virtual void fen(istream& is) override
+    {
+        return field().fen(is);
     }
 
     Field& field() { return fields.back(); }

@@ -74,6 +74,17 @@ T_moves parseMoves(const char* movesStr)
     return ret;
 }
 
+string checkFenIo(string fenIn)
+{
+    PChessBoard board = makeChessBoard();
+    istringstream sFenIn(fenIn);
+    board->fen(sFenIn);
+    string fenOut = board->fen();
+    if(fenOut != fenIn)
+        return fenOut;
+    return "";
+}
+
 void test()
 {
     using namespace Chess;
@@ -197,6 +208,9 @@ void test()
          :::::_(#)_:::::(_#_)_(#)__[#]__[#]_
     */
     TEST_EQUAL(board->fen(), "2B1KBNR/1PP1PPPP/1bNP4/p4Q2/1P6/2rp1n2/2p1pppp/1n1qkb1r w");
+
+    TEST_EQUAL(checkFenIo("8/8/8/8/8/8/8/8 b"),"");
+    TEST_EQUAL(checkFenIo("2B1KBNR/1PP1PPPP/1bNP4/p4Q2/1P6/2rp1n2/2p1pppp/1n1qkb1r w"),"");
 //  cout << board->fen() << endl;
 //  board->print(cout);
 }

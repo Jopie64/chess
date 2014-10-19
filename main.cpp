@@ -164,10 +164,15 @@ int main(int argc, char *argv[])
         {
             "fen", "f",
             "Input or output chess board in FEN notation",
-            [&](istream&)
+            [&](istream& params)
             {
                 // http://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
-                cout << board->fen() << endl;
+                if(params.peek() == char_traits<char>::eof())
+                {
+                    cout << board->fen() << endl;
+                    return;
+                }
+                board->fen(params);
             }
         },
         {

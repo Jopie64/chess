@@ -77,6 +77,7 @@ istream& operator >>(istream& is, Move& m)
     return is;
 }
 
+struct thinkCtxt;
 
 struct Field
 {
@@ -90,6 +91,13 @@ struct Field
     inline void  set(Pos pos, Piece p) { pieces[toIx(pos)] = p; }
 
     bool isInside(Pos pos) const { return pos.x >= 0 && pos.x < WIDTH && pos.y >= 0 && pos.y < HEIGHT; }
+
+    inline bool operator==(const Field& f) const
+    {
+        if(turn != f.turn)
+            return false;
+        return memcmp(pieces,f.pieces,sizeof(pieces)) == 0;
+    }
 
     //*** Move
     template<class T_moveCollector>
@@ -310,18 +318,6 @@ struct Field
     }
 
     //**** Think
-    struct ScoreFound
-    {
-        enum State { notSet, finding, found };
-        State state;
-        int score;
-    };
-
-    struct thinkCtxt
-    {
-        thinkCtxt(){memset(scoreFound,0,sizeof(scoreFound));}
-        ScoreFound scoreFound[0x10000];
-    };
 
     int evaluate() const
     {
@@ -362,87 +358,14 @@ struct Field
         return total;
     }
 
-    void think(const T_moveProgress& moves, int maxDepth)
-    {
-        vector<MoveScore> moveScores;
-        for(int i=0; i < POSITIONS; ++i)
-            if(get(i).isOfColor(turn))
-                getMoves([&](Move m) {
-                    if(m.pto.isOfColor(turn))
-                        return true;
-                    moveScores.emplace_back(m,0);
-                    return true;
-                }, i);
-        if(moveScores.empty())
-            throw runtime_error("No moves possible.");
-        for(int depth = 0; depth <= maxDepth; ++depth)
-        {
-            int a = -WINDOWMAX;
-            //int a = 200000;
-            int b = WINDOWMAX;
-            thinkCtxt ctxt;
-            for(auto &mvs : moveScores)
-            {
-                Move &m = mvs.move;
-                Field workField = *this;
-                workField.move(m);
-                int score = -workField.score(ctxt, depth, -b, -a);
-                bool isSameScore = score == a;
-                if(score > a)
-                    a = score;
-                //alpha/beta pruning causes even or worse scores to be pruned
-                //in which case the current highest score is returned. But it is actually
-                //probably a worse score, so it should not be the first choice.
-                //Thats why 1 is subtracted for follow up 'best' scores, which makes sure
-                //it is not the first choice.
-                mvs.score = score * 2 - (isSameScore ? 1 : 0);
-            }
-            sort(moveScores.begin(), moveScores.end(),
-                [](const MoveScore& l, const MoveScore& r) {return l.score > r.score;});
-            moves(moveScores.front().move, depth, moveScores.front().score);
-        }
-    }
+    void think(const T_moveProgress& moves, int maxDepth);
 
     inline bool hasKing(bool color) const
     {
         return !!memchr(pieces, Piece(color,Piece::king).m_piece, sizeof(pieces));
     }
 
-    int score(thinkCtxt& ctxt, int depth, int a, int b)
-    {
-        if(depth <= 0)
-            return evaluate();
-        if(!hasKing(turn)) return -WINDOWMAX;
-        if(!hasKing(!turn)) return WINDOWMAX;
-        auto onMove = [&](Move m)
-        {
-            Field workField = *this;
-            workField.move(m);
-            ScoreFound& found = ctxt.scoreFound[workField.hash()];
-            if(found.state == ScoreFound::finding)
-                return true; //Skip same move
-            int newScore;
-            if(found.state == ScoreFound::found)
-                newScore = found.score;
-            else
-            {
-                found.state = ScoreFound::finding;
-                found.score = newScore = -workField.score(ctxt, depth - 1, -b, -a);
-                found.state = ScoreFound::found;
-            }
-            if(newScore > a)
-                a = newScore;
-            if(a >= b)
-                return false; //beta cutoff
-            return true;
-        };
-
-        for(int i=0; i < POSITIONS; ++i)
-            if(get(i).isOfColor(turn))
-                if(!getMoves(onMove, i))
-                    return a;
-        return a;
-    }
+    int score(thinkCtxt& ctxt, int depth, int a, int b);
 
 
     //**** Fen
@@ -557,6 +480,112 @@ struct Field
     T_hash hashVal;
 };
 
+struct ScoreFound
+{
+    ScoreFound(const Field& f):state(notSet),score(0), field(f){}
+    enum State { notSet, finding, found };
+    State state;
+    int score;
+    Field field;
+};
+
+struct thinkCtxt
+{
+    thinkCtxt(){}
+
+    ScoreFound& getScoreFound(const Field& f)
+    {
+        auto &sfs = scoreFound[f.hash()];
+        for(auto &i:sfs)
+            if(i.field == f)
+                return i;
+        sfs.emplace_back(f);
+        return sfs.back();
+    }
+
+    vector<ScoreFound> scoreFound[0x10000];
+};
+
+void Field::think(const T_moveProgress& moves, int maxDepth)
+{
+    vector<MoveScore> moveScores;
+    for(int i=0; i < POSITIONS; ++i)
+        if(get(i).isOfColor(turn))
+            getMoves([&](Move m) {
+                if(m.pto.isOfColor(turn))
+                    return true;
+                moveScores.emplace_back(m,0);
+                return true;
+            }, i);
+    if(moveScores.empty())
+        throw runtime_error("No moves possible.");
+    for(int depth = 0; depth <= maxDepth; ++depth)
+    {
+        int a = -WINDOWMAX;
+        //int a = 200000;
+        int b = WINDOWMAX;
+        thinkCtxt ctxt;
+        for(auto &mvs : moveScores)
+        {
+            Move &m = mvs.move;
+            Field workField = *this;
+            workField.move(m);
+            int score = -workField.score(ctxt, depth, -b, -a);
+            bool isSameScore = score == a;
+            if(score > a)
+                a = score;
+            //alpha/beta pruning causes even or worse scores to be pruned
+            //in which case the current highest score is returned. But it is actually
+            //probably a worse score, so it should not be the first choice.
+            //Thats why 1 is subtracted for follow up 'best' scores, which makes sure
+            //it is not the first choice.
+            mvs.score = score * 2 - (isSameScore ? 1 : 0);
+        }
+        sort(moveScores.begin(), moveScores.end(),
+            [](const MoveScore& l, const MoveScore& r) {return l.score > r.score;});
+        moves(moveScores.front().move, depth, moveScores.front().score);
+    }
+}
+
+int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
+{
+    if(depth <= 0)
+        return evaluate();
+    if(!hasKing(turn)) return -WINDOWMAX;
+    if(!hasKing(!turn)) return WINDOWMAX;
+    auto onMove = [&](Move m)
+    {
+        Field workField = *this;
+        workField.move(m);
+        ScoreFound& found = ctxt.getScoreFound(workField);
+        if(found.state == ScoreFound::finding)
+            return true; //Skip same move
+        int newScore;
+        if(found.state == ScoreFound::found)
+            newScore = found.score;
+        else
+        {
+            found.state = ScoreFound::finding;
+            found.score = newScore = -workField.score(ctxt, depth - 1, -b, -a);
+            if (newScore == a)
+                //Beta cutoff. So score not set...
+                found.state = ScoreFound::notSet;
+            else
+                found.state = ScoreFound::found;
+        }
+        if(newScore > a)
+            a = newScore;
+        if(a >= b)
+            return false; //beta cutoff
+        return true;
+    };
+
+    for(int i=0; i < POSITIONS; ++i)
+        if(get(i).isOfColor(turn))
+            if(!getMoves(onMove, i))
+                return a;
+    return a;
+}
 
 //Initialize has table during static init time
 const T_hash clearHashVal = []

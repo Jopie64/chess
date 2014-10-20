@@ -85,12 +85,13 @@ struct Field
 
     static inline int toIx(Pos p) { return p.x + p.y * WIDTH; }
     static inline Pos toPos(int ix) { return Pos(ix%WIDTH, ix/WIDTH); }
-    Piece get(int i) const { return pieces[i]; }
-    Piece get(Pos pos) const { return pieces[toIx(pos)]; }
-    void  set(Pos pos, Piece p) { pieces[toIx(pos)] = p; }
+    inline Piece get(int i) const { return pieces[i]; }
+    inline Piece get(Pos pos) const { return pieces[toIx(pos)]; }
+    inline void  set(Pos pos, Piece p) { pieces[toIx(pos)] = p; }
 
     bool isInside(Pos pos) const { return pos.x >= 0 && pos.x < WIDTH && pos.y >= 0 && pos.y < HEIGHT; }
 
+    //*** Move
     template<class T_moveCollector>
     void getMoves(const T_moveCollector& moves) const
     {
@@ -276,6 +277,7 @@ struct Field
         turn = !turn;
     }
 
+    //**** Hash
     static T_hash hashPiecePos(int pos, Piece piece)
     {
         int pieceIx = 0;
@@ -306,6 +308,20 @@ struct Field
         default: return 0;
         }
     }
+
+    //**** Think
+    struct ScoreFound
+    {
+        enum State { notSet, finding, found };
+        State state;
+        int score;
+    };
+
+    struct thinkCtxt
+    {
+        thinkCtxt(){memset(scoreFound,0,sizeof(scoreFound));}
+        ScoreFound scoreFound[0x10000];
+    };
 
     int evaluate() const
     {
@@ -364,12 +380,13 @@ struct Field
             int a = -WINDOWMAX;
             //int a = 200000;
             int b = WINDOWMAX;
+            thinkCtxt ctxt;
             for(auto &mvs : moveScores)
             {
                 Move &m = mvs.move;
                 Field workField = *this;
                 workField.move(m);
-                int score = -workField.score(depth, -b, -a);
+                int score = -workField.score(ctxt, depth, -b, -a);
                 bool isSameScore = score == a;
                 if(score > a)
                     a = score;
@@ -391,7 +408,7 @@ struct Field
         return !!memchr(pieces, Piece(color,Piece::king).m_piece, sizeof(pieces));
     }
 
-    int score(int depth, int a, int b)
+    int score(thinkCtxt& ctxt, int depth, int a, int b)
     {
         if(depth <= 0)
             return evaluate();
@@ -401,7 +418,18 @@ struct Field
         {
             Field workField = *this;
             workField.move(m);
-            int newScore = -workField.score(depth - 1, -b, -a);
+            ScoreFound& found = ctxt.scoreFound[workField.hash()];
+            if(found.state == ScoreFound::finding)
+                return true; //Skip same move
+            int newScore;
+            if(found.state == ScoreFound::found)
+                newScore = found.score;
+            else
+            {
+                found.state = ScoreFound::finding;
+                found.score = newScore = -workField.score(ctxt, depth - 1, -b, -a);
+                found.state = ScoreFound::found;
+            }
             if(newScore > a)
                 a = newScore;
             if(a >= b)
@@ -415,6 +443,9 @@ struct Field
                     return a;
         return a;
     }
+
+
+    //**** Fen
 
     static char fenChar(Piece p)
     {

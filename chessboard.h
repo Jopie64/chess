@@ -8,6 +8,8 @@
 namespace Chess
 {
 
+typedef unsigned short T_hash;
+
 struct Pos
 {
     Pos(char X=-1, char Y=-1):x(X),y(Y){}
@@ -149,6 +151,8 @@ public:
     virtual std::string
                     fen() const =0;
     virtual void    fen(std::istream& is) =0;
+    virtual void    fen(const char* s) =0;
+    virtual T_hash  hash() const=0;
 };
 
 typedef std::shared_ptr<ChessBoard> PChessBoard;

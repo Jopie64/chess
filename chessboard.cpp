@@ -33,6 +33,11 @@ const char* AsciiPieces =
         "     :::::_(#)__[#]__[#]__(#)_[_#_](_#_)";
 
 
+// http://en.wikipedia.org/wiki/Zobrist_hashing
+T_hash randomHashTable[POSITIONS][Piece::king*2];
+
+extern const T_hash clearHashVal;
+
 ostream& operator <<(ostream& os, const Pos& p)
 {
     return os << (char)('A' + p.x) << 1 + (int)p.y;
@@ -75,7 +80,7 @@ istream& operator >>(istream& is, Move& m)
 
 struct Field
 {
-    Field():turn(true) //White first
+    Field():turn(true),hashVal(clearHashVal)
     { memset(pieces,0,sizeof(pieces)); }
 
     static inline int toIx(Pos p) { return p.x + p.y * WIDTH; }
@@ -259,9 +264,33 @@ struct Field
 
     void move(const Move& move)
     {
-        set(move.to, get(move.from));
+        int ixFrom = toIx(move.from);
+        int ixTo = toIx(move.to);
+        Piece movingPiece = get(ixFrom);
+        hashVal ^= hashPiecePos(ixTo, get(move.to));   //undo to-pos
+        hashVal ^= hashPiecePos(ixTo, movingPiece);    //hash new to-pos
+        hashVal ^= hashPiecePos(ixFrom, movingPiece);  //undo from-pos
+        hashVal ^= hashPiecePos(ixFrom, Piece(false)); //hash new from-pos (now empty)
+        set(move.to, movingPiece);
         set(move.from, Piece(false));
         turn = !turn;
+    }
+
+    static T_hash hashPiecePos(int pos, Piece piece)
+    {
+        int pieceIx = 0;
+        if(!piece.isEmpty())
+            pieceIx = piece.piece() * 2 + (piece.color() ? 1 : 0);
+        return randomHashTable[pos][pieceIx];
+    }
+
+    T_hash hash() const { return hashVal; }
+
+    void resetHashVal()
+    {
+        hashVal = 0;
+        for(int i=0; i<POSITIONS; ++i)
+            hashVal ^= hashPiecePos(i,get(i));
     }
 
     static int pieceVal(Piece::Enum e)
@@ -333,6 +362,7 @@ struct Field
         for(int depth = 0; depth <= maxDepth; ++depth)
         {
             int a = -WINDOWMAX;
+            //int a = 200000;
             int b = WINDOWMAX;
             for(auto &mvs : moveScores)
             {
@@ -457,6 +487,8 @@ struct Field
         string t;
         is >> t;
         turn = t == "w";
+
+        resetHashVal();
     }
 
     void fen(ostream& os) const
@@ -490,8 +522,22 @@ struct Field
     }
 
     Piece pieces[POSITIONS];
-    bool  turn;
+    bool  turn; //turn == true: white
+    T_hash hashVal;
 };
+
+
+//Initialize has table during static init time
+const T_hash clearHashVal = []
+{
+    for(int i=0; i<POSITIONS; ++i)
+        for(int j=0; j<Piece::king*2; ++j)
+            randomHashTable[i][j] = rand()%0x10000;
+
+    Field clearField;
+    clearField.resetHashVal();
+    return clearField.hash();
+}();
 
 #define PW(p) {Piece(true, Piece::p)},
 #define PB(p) {Piece(false, Piece::p)},
@@ -538,10 +584,10 @@ public:
 
     virtual void reset() override
     {
-        fields.clear();
         fields.emplace_back();
         memcpy(field().pieces, INITIAL_FIELD, sizeof(field().pieces));
         field().turn = true; //White first
+        field().resetHashVal();
     }
 
     virtual T_moves getMoves(Pos p) override
@@ -612,7 +658,20 @@ public:
 
     virtual void fen(istream& is) override
     {
+        fields.emplace_back();
         return field().fen(is);
+    }
+
+    virtual void fen(const char* s) override
+    {
+        istringstream is(s);
+        fen(is);
+    }
+
+
+    virtual T_hash hash() const override
+    {
+        return field().hash();
     }
 
     Field& field() { return fields.back(); }

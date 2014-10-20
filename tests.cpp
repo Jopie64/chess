@@ -207,10 +207,45 @@ void test()
          ::::: [ ] ::::: ,o/  [ ]  ,o/  III
          :::::_(#)_:::::(_#_)_(#)__[#]__[#]_
     */
-    TEST_EQUAL(board->fen(), "2B1KBNR/1PP1PPPP/1bNP4/p4Q2/1P6/2rp1n2/2p1pppp/1n1qkb1r w");
+    const char* endFen = "2B1KBNR/1PP1PPPP/1bNP4/p4Q2/1P6/2rp1n2/2p1pppp/1n1qkb1r w";
+    T_hash endHash = board->hash();
+
+    TEST_EQUAL(board->fen(), endFen);
 
     TEST_EQUAL(checkFenIo("8/8/8/8/8/8/8/8 b"),"");
     TEST_EQUAL(checkFenIo("2B1KBNR/1PP1PPPP/1bNP4/p4Q2/1P6/2rp1n2/2p1pppp/1n1qkb1r w"),"");
+
+    //**** Test board hashes
+    board->reset();
+    TEST_ASSERT(board->hash() != endHash);
+
+    board->fen(endFen);
+    TEST_EQUAL(board->hash(), endHash);
+
+    board->reset();
+
+    // Compare hash of resetted chess board
+    PChessBoard board2 = makeChessBoard();
+    board2->fen(board->fen().c_str());
+    TEST_EQUAL(board2->hash(), board->hash());
+
+    // Compare hash of clear chess board
+    board2 = makeChessBoard();
+    board->fen(board2->fen().c_str());
+    TEST_EQUAL(board2->hash(), board->hash());
+
+
+    // Compare hash of chess board with single move
+    board = makeChessBoard();
+    board->fen("K7/8/8/8/8/8/8/k7 w");
+    board->move("A1-B1");
+
+    board2 = makeChessBoard();
+    board2->fen("1K6/8/8/8/8/8/8/k7 b");
+    TEST_EQUAL(board->fen(),board2->fen());
+    TEST_EQUAL(board->hash(),board2->hash());
+
+
 //  cout << board->fen() << endl;
 //  board->print(cout);
 }

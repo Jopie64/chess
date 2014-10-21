@@ -319,11 +319,42 @@ struct Field
     }
 
     //**** Think
+    enum eEndState { notEnded, noWhiteKing, noBlackKing, noOther };
+    eEndState simpleIsEnded() const
+    {
+        bool whiteKing = false;
+        bool blackKing = false;
+        bool other = false;
+        for(auto i:pieces)
+        {
+            Piece::Enum p = i.piece();
+            if(p == Piece::nothing)
+                continue;
+            if(p==Piece::king)
+            {
+                if(i.color())
+                    whiteKing = true;
+                else
+                    blackKing = true;
+            }
+            else
+                other = true;
+        }
+        if(!whiteKing)
+            return noWhiteKing;
+        if(!blackKing)
+            return noBlackKing;
+        if(!other)
+            return noOther;
+        return notEnded;
+    }
 
     int evaluate() const
     {
-        if(!hasKing(turn)) return -WINDOWMAX;
-        if(!hasKing(!turn)) return WINDOWMAX;
+        eEndState end = simpleIsEnded();
+        if(end == noWhiteKing) return turn  ? -WINDOWMAX : WINDOWMAX;
+        if(end == noBlackKing) return !turn ? -WINDOWMAX : WINDOWMAX;
+        if(end == noOther) return 0;
         int total = 0;
         for(int ix=0; ix < POSITIONS; ++ix)
         {
@@ -552,10 +583,8 @@ void Field::think(const T_moveProgress& moves, int maxDepth)
 
 int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
 {
-    if(depth <= 0)
+    if(depth <= 0 || simpleIsEnded() != notEnded)
         return evaluate();
-    if(!hasKing(turn)) return -WINDOWMAX;
-    if(!hasKing(!turn)) return WINDOWMAX;
     auto onMove = [&](Move m)
     {
         Field workField = *this;

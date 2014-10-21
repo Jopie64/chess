@@ -245,6 +245,23 @@ void test()
     TEST_EQUAL(board->fen(),board2->fen());
     TEST_EQUAL(board->hash(),board2->hash());
 
+    //**** Test evaluate
+    board = makeChessBoard();
+    board->fen("K7/8/8/8/8/8/8/k7 w");
+
+    //no win: 0
+    TEST_EQUAL(board->evaluate(),0);
+
+    //wins:
+    board->fen("K7/8/8/8/8/8/8/q7 w");
+    TEST_ASSERT(board->evaluate() > 200000);
+    board->fen("K7/8/8/8/8/8/8/q7 b");
+    TEST_ASSERT(board->evaluate() < 200000);
+
+    board->fen("k7/8/8/8/8/8/8/Q7 b");
+    TEST_ASSERT(board->evaluate() > 200000);
+    board->fen("k7/8/8/8/8/8/8/Q7 w");
+    TEST_ASSERT(board->evaluate() < 200000);
 
 //  cout << board->fen() << endl;
 //  board->print(cout);

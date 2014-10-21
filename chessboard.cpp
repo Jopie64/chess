@@ -2,6 +2,7 @@
 #include <string.h>
 #include <sstream>
 #include <algorithm>
+#include <random>
 
 using namespace std;
 
@@ -491,7 +492,7 @@ struct ScoreFound
 
 struct thinkCtxt
 {
-    thinkCtxt(){}
+    thinkCtxt():scoreFound(0x10000){}
 
     ScoreFound& getScoreFound(const Field& f)
     {
@@ -503,7 +504,7 @@ struct thinkCtxt
         return sfs.back();
     }
 
-    vector<ScoreFound> scoreFound[0x10000];
+    vector<vector<ScoreFound>> scoreFound;
 };
 
 void Field::think(const T_moveProgress& moves, int maxDepth)
@@ -557,21 +558,25 @@ int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
     {
         Field workField = *this;
         workField.move(m);
-        ScoreFound& found = ctxt.getScoreFound(workField);
-        if(found.state == ScoreFound::finding)
+        ScoreFound* found = &ctxt.getScoreFound(workField);
+        if(found->state == ScoreFound::finding)
             return true; //Skip same move
         int newScore;
-        if(found.state == ScoreFound::found)
-            newScore = found.score;
+        if(found->state == ScoreFound::found)
+            newScore = found->score;
         else
         {
-            found.state = ScoreFound::finding;
-            found.score = newScore = -workField.score(ctxt, depth - 1, -b, -a);
+            found->state = ScoreFound::finding;
+            newScore = -workField.score(ctxt, depth - 1, -b, -a);
+            if(depth > 0)
+                //ScoreFound object could have moved in memory. Search it again.
+                found = &ctxt.getScoreFound(workField);
+            found->score = newScore;
             if (newScore == a)
                 //Beta cutoff. So score not set...
-                found.state = ScoreFound::notSet;
+                found->state = ScoreFound::notSet;
             else
-                found.state = ScoreFound::found;
+                found->state = ScoreFound::found;
         }
         if(newScore > a)
             a = newScore;
@@ -590,9 +595,12 @@ int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
 //Initialize has table during static init time
 const T_hash clearHashVal = []
 {
+    default_random_engine generator;
+    uniform_int_distribution<int> distribution(0,0x10000);
+
     for(int i=0; i<POSITIONS; ++i)
         for(int j=0; j<Piece::king*2; ++j)
-            randomHashTable[i][j] = rand()%0x10000;
+            randomHashTable[i][j] = distribution(generator);
 
     Field clearField;
     clearField.resetHashVal();

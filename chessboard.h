@@ -137,7 +137,7 @@ class ChessBoard
 public:
     ChessBoard();
 
-    virtual void print(std::ostream& os) =0;
+    virtual void print(std::ostream& os) const =0;
     virtual void reset() =0;
 
     virtual T_moves getMoves(Pos p) =0;

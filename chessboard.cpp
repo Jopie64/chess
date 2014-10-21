@@ -476,6 +476,8 @@ struct Field
             os << 'b';
     }
 
+    void print(ostream& os) const;
+
     Piece pieces[POSITIONS];
     bool  turn; //turn == true: white
     T_hash hashVal;
@@ -592,6 +594,28 @@ int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
     return a;
 }
 
+void Field::print(ostream& os) const
+{
+    Pos pos;
+    for(pos.y = 7; pos.y >= 0; --pos.y)
+        for(int line = 0; line < AsciiPieceHeight; ++line)
+        {
+            for(pos.x = 0; pos.x < 8; ++pos.x)
+            {
+                Piece p = get(pos);
+                int colorOffset = p.color() ? AsciiPieceCount * AsciiPieceWidth * AsciiPieceHeight : 0;
+                int asciiPieceNr = (pos.x + pos.y) % 2;
+                if(p.piece() != Piece::nothing)
+                    asciiPieceNr = p.piece() + 1;
+                size_t asciiStrPos =
+                        AsciiPieceCount * AsciiPieceWidth * line +
+                        AsciiPieceWidth * asciiPieceNr + colorOffset;
+                os.write(AsciiPieces + asciiStrPos, AsciiPieceWidth);
+            }
+            os << endl;
+        }
+}
+
 //Initialize has table during static init time
 const T_hash clearHashVal = []
 {
@@ -628,26 +652,9 @@ class BoardImpl : public ChessBoard
 public:
     BoardImpl(){reset();}
 
-    virtual void print(ostream& os) override
+    virtual void print(ostream& os) const override
     {
-        Pos pos;
-        for(pos.y = 7; pos.y >= 0; --pos.y)
-            for(int line = 0; line < AsciiPieceHeight; ++line)
-            {
-                for(pos.x = 0; pos.x < 8; ++pos.x)
-                {
-                    Piece p = field().get(pos);
-                    int colorOffset = p.color() ? AsciiPieceCount * AsciiPieceWidth * AsciiPieceHeight : 0;
-                    int asciiPieceNr = (pos.x + pos.y) % 2;
-                    if(p.piece() != Piece::nothing)
-                        asciiPieceNr = p.piece() + 1;
-                    size_t asciiStrPos =
-                            AsciiPieceCount * AsciiPieceWidth * line +
-                            AsciiPieceWidth * asciiPieceNr + colorOffset;
-                    os.write(AsciiPieces + asciiStrPos, AsciiPieceWidth);
-                }
-                os << endl;
-            }
+        field().print(os);
     }
 
     virtual void reset() override

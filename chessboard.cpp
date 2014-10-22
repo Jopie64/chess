@@ -363,7 +363,7 @@ struct Field
             int pval = pieceVal(i.piece());
             if(pval == 0)
                 continue; //not a piece
-            val = pval * 3; //Having a piece is 3 times more worth than being able to capture such a piece
+            val = pval * 10; //Having a piece is 10 times more worth than being able to capture such a piece
             getMoves([&](Move m)
             {
                 bool bIsKing = m.pto.piece() == Piece::king;
@@ -380,7 +380,7 @@ struct Field
                     //Above or below that value, is less of an issue...
                     val += max(0, 3 - abs(pieceVal(m.pto.piece())-4));
                 else
-                    val += max(0, (bIsKing ? 2000 : pieceVal(m.pto.piece())) - pval);
+                    val += max(0, (bIsKing ? 10 : pieceVal(m.pto.piece())) - pval);
                 return true;
             },ix);
             if(!turn != !i.color())
@@ -554,6 +554,7 @@ void Field::think(const T_moveProgress& moves, int maxDepth)
     if(moveScores.empty())
         throw runtime_error("No moves possible.");
     for(int depth = 0; depth <= maxDepth; ++depth)
+    //int depth = maxDepth;
     {
         int a = -WINDOWMAX;
         //int a = 200000;
@@ -578,6 +579,14 @@ void Field::think(const T_moveProgress& moves, int maxDepth)
         sort(moveScores.begin(), moveScores.end(),
             [](const MoveScore& l, const MoveScore& r) {return l.score > r.score;});
         moves(moveScores.front().move, depth, moveScores.front().score);
+
+        size_t count = 0;
+        for(auto &i:ctxt.scoreFound)
+        {
+//            cout << i.size() << endl;
+            count += i.size();
+        }
+        cout << "total: " << count << endl;
     }
 }
 
@@ -593,13 +602,13 @@ int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
         if(found->state == ScoreFound::finding)
             return true; //Skip same move
         int newScore;
-        if(found->state == ScoreFound::found)
-            newScore = found->score;
-        else
+//        if(found->state == ScoreFound::found)
+//            newScore = found->score;
+//        else
         {
             found->state = ScoreFound::finding;
             newScore = -workField.score(ctxt, depth - 1, -b, -a);
-            if(depth > 0)
+            if(depth > 1)
                 //ScoreFound object could have moved in memory. Search it again.
                 found = &ctxt.getScoreFound(workField);
             found->score = newScore;

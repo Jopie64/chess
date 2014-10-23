@@ -397,7 +397,7 @@ struct Field
         return !!memchr(pieces, Piece(color,Piece::king).m_piece, sizeof(pieces));
     }
 
-    int score(thinkCtxt& ctxt, int depth, int a, int b);
+    int score(int depth, int a, int b);
 
 
     //**** Fen
@@ -559,13 +559,12 @@ void Field::think(const T_moveProgress& moves, int maxDepth)
         int a = -WINDOWMAX;
         //int a = 200000;
         int b = WINDOWMAX;
-        thinkCtxt ctxt;
         for(auto &mvs : moveScores)
         {
             Move &m = mvs.move;
             Field workField = *this;
             workField.move(m);
-            int score = -workField.score(ctxt, depth, -b, -a);
+            int score = -workField.score(depth, -b, -a);
             bool isSameScore = score == a;
             if(score > a)
                 a = score;
@@ -579,18 +578,10 @@ void Field::think(const T_moveProgress& moves, int maxDepth)
         sort(moveScores.begin(), moveScores.end(),
             [](const MoveScore& l, const MoveScore& r) {return l.score > r.score;});
         moves(moveScores.front().move, depth, moveScores.front().score);
-
-        size_t count = 0;
-        for(auto &i:ctxt.scoreFound)
-        {
-//            cout << i.size() << endl;
-            count += i.size();
-        }
-        cout << "total: " << count << endl;
     }
 }
 
-int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
+int Field::score(int depth, int a, int b)
 {
     if(depth <= 0 || simpleIsEnded() != notEnded)
         return evaluate();
@@ -598,26 +589,7 @@ int Field::score(thinkCtxt& ctxt, int depth, int a, int b)
     {
         Field workField = *this;
         workField.move(m);
-        ScoreFound* found = &ctxt.getScoreFound(workField);
-        if(found->state == ScoreFound::finding)
-            return true; //Skip same move
-        int newScore;
-//        if(found->state == ScoreFound::found)
-//            newScore = found->score;
-//        else
-        {
-            found->state = ScoreFound::finding;
-            newScore = -workField.score(ctxt, depth - 1, -b, -a);
-            if(depth > 1)
-                //ScoreFound object could have moved in memory. Search it again.
-                found = &ctxt.getScoreFound(workField);
-            found->score = newScore;
-            if (newScore == a)
-                //Beta cutoff. So score not set...
-                found->state = ScoreFound::notSet;
-            else
-                found->state = ScoreFound::found;
-        }
+        int newScore = -workField.score(depth - 1, -b, -a);
         if(newScore > a)
             a = newScore;
         if(a >= b)

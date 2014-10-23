@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
                 int depth = -1;
                 params >> depth;
                 if(depth < 0)
-                    depth = 3;
+                    depth = 4;
                 moves.clear();
                 board->think([&](Move m, int progress, int score)
                 {

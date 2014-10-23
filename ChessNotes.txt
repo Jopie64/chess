@@ -1,0 +1,31 @@
+K4Q2/8/8/8/8/8/8/k7 w
+
+
+R1B2R2/PPPKNb1P/2N2qP1/2B1P3/4p3/2n3p1/pppp1p1p/r1b1k1nr b
+http://nl.lichess.org/NWJG6ZRVjqjk
+Geeft nu D7-D6
+
+4q3/1P2N3/1PN1K3/P3P1b1/4p1BP/3p2p1/ppp1nk1p/r6r w
+
+Doe hier T 5
+4q3/1P2N3/1P2K3/P3P1b1/1N2p1BP/3p2p1/ppp1nk1p/r6r b
+Dan gebeurt er dit:
+6. E1xE2: 568
+5. G4xE2: 482
+4. E1xE2: 2147483646
+3. E1xE2: 2147483646
+2. E1xE2: 2147483646
+1. G4xE2: 482
+
+Hoe kan dat???
+
+Mat in 1 zet:
+4q3/1P2N3/1P2K3/P5b1/1N1Pp1BP/3p2p1/ppp2k1p/r6r b
+(E1-E2)
+Waarom dan:
+6. E1xE2: 490
+5. G4xE2: 404
+4. E1xE2: 2147483646
+3. E1xE2: 2147483646
+2. E1xE2: 2147483646
+1. G4xE2: 404

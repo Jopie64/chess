@@ -29,3 +29,29 @@ Waarom dan:
 3. E1xE2: 2147483646
 2. E1xE2: 2147483646
 1. G4xE2: 404
+
+
+2B1K2R/1RPQBPP1/P1P2N1P/3P4/p2pP3/2n1p1q1/1ppknppp/r1b1r3 w
+rokeren
+2B2RK1/1RPQBPP1/P1P2N1P/3P4/p2pP3/2n1p1q1/1ppknppp/r1b1r3 b
+
+r1B2RK1/1R2QPP1/5N1P/3P4/1P1pP3/4p1qp/2pknpp1/4r3 b
+
+1rB1R1K1/5P2/2R2N1P/3P2P1/1Q1pP3/1pn1p2p/3k1ppq/2r5 w
+
+1r2R1K1/5P2/2pqBN1P/3P2P1/2QpP3/2n1p2p/2rk1pp1/8 b
+
+Deze:
+QR3K2/5P2/2p1B2r/1r4q1/8/2nPP2p/1k4p1/8 b
+Geeft mat in 1 zet, maar bij T 5:
+6. B4xB1: 320
+5. B4xB1: 150
+4. H3-H1: 340
+3. H3-H1: 180
+2. H3-H1: 346
+1. H3-H1: 258
+
+Waarom ziet hij mat niet aankomen??
+Na de volgende zet wel...
+(Hij won overigens wel van stockfish level 1: http://nl.lichess.org/FQm26ZdqkEkq)
+

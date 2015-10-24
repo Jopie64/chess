@@ -707,7 +707,7 @@ public:
             }
         if(!valid)
             throw runtime_error("Not a valid move");
-        fields.emplace_back(field());
+        fields.emplace_back(Chess::Field(field()));
         field().move(move);
     }
 

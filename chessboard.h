@@ -4,6 +4,7 @@
 #include <memory>
 #include <iostream>
 #include <vector>
+#include <functional>
 
 namespace Chess
 {
@@ -74,7 +75,7 @@ struct Piece
     Piece(bool color, Enum piece):m_piece((color ? 0x80 : 0) | piece) {}
 
 
-    inline bool color() const { return m_piece & 0x80; }
+    inline bool color() const { return !!(m_piece & 0x80); }
     inline Enum piece() const { return Enum(m_piece&0xF); }
     inline bool isEmpty() const { return piece() == nothing; }
     inline bool isOfColor(bool white) const { if(isEmpty()) return false; return !white == !color(); }
